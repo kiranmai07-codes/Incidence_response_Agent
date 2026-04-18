@@ -3,320 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IRA — Incident Response Agent</title>
-    
-    <!-- FIXED: Correct path - go UP one folder to find css -->
+    <title>IRA - Incident Response Agent</title>
     <link rel="stylesheet" href="style.css">
-    
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
-
-    <!-- Animated background grid -->
     <div class="bg-grid"></div>
     <div class="bg-noise"></div>
 
-    <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
-            <div class="logo-icon">
-                <span class="logo-pulse"></span>
-                <i class="fa-solid fa-shield-halved"></i>
-            </div>
-            <div class="logo-text">
-                <span class="logo-title">IRA</span>
-                <span class="logo-sub">Incident Response</span>
-            </div>
+            <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div><div class="logo-title">IRA</div><div class="logo-sub">Incident Response</div></div>
         </div>
-
         <nav class="sidebar-nav">
-            <a href="dashboard.html" class="nav-item active">
-                <i class="fa-solid fa-gauge-high"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="incidents.html" class="nav-item">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <span>Incidents</span>
-                <span class="nav-badge" id="nav-open-count">0</span>
-            </a>
-            <a href="agent.html" class="nav-item">
-                <i class="fa-solid fa-robot"></i>
-                <span>AI Agent</span>
-                <span class="nav-badge new">AI</span>
-            </a>
-            <a href="analytics.html" class="nav-item">
-                <i class="fa-solid fa-chart-line"></i>
-                <span>Analytics</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fa-solid fa-gear"></i>
-                <span>Settings</span>
-            </a>
+            <a href="index.html" class="nav-item active"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+            <a href="incidents.html" class="nav-item"><i class="fa-solid fa-triangle-exclamation"></i> Incidents<span class="nav-badge" id="nav-open-count">0</span></a>
+            <a href="agent.html" class="nav-item"><i class="fa-solid fa-robot"></i> AI Agent<span class="nav-badge new">AI</span></a>
+            <a href="analytics.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> Analytics</a>
         </nav>
-
-        <div class="sidebar-status">
-            <div class="status-dot active"></div>
-            <span>Agent Active</span>
-        </div>
+        <div class="sidebar-status"><div class="status-dot active"></div><span>Agent Active</span></div>
     </aside>
 
-    <!-- Main Content -->
     <main class="main-content">
         <header class="topbar">
-            <button class="sidebar-toggle" onclick="toggleSidebar()">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            <div class="topbar-title">
-                <h1>Operations Dashboard</h1>
-                <span class="topbar-time" id="live-time"></span>
-            </div>
+            <div class="topbar-title"><h1>Operations Dashboard</h1><span class="topbar-time" id="live-time"></span></div>
             <div class="topbar-actions">
-                <div class="search-box">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Search incidents..." id="global-search" oninput="filterIncidents(this.value)">
-                </div>
-                <button class="btn-alert" id="alert-bell" onclick="toggleAlertPanel()">
-                    <i class="fa-solid fa-bell"></i>
-                    <span class="bell-badge" id="bell-count">3</span>
-                </button>
-                <button class="btn-primary" onclick="openCreateModal()">
-                    <i class="fa-solid fa-plus"></i> New Incident
-                </button>
+                <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Search incidents..." id="global-search"></div>
+                <button class="btn-alert" onclick="toggleAlertPanel()"><i class="fa-solid fa-bell"></i><span class="bell-badge" id="bell-count">3</span></button>
+                <button class="btn-primary" onclick="openCreateModal()"><i class="fa-solid fa-plus"></i> New Incident</button>
             </div>
         </header>
 
-        <!-- Alert Panel -->
-        <div class="alert-panel" id="alert-panel">
-            <div class="alert-panel-header">
-                <span>Recent Alerts</span>
-                <button onclick="toggleAlertPanel()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="alert-list" id="alert-list"></div>
+        <div class="alert-panel" id="alert-panel"><div class="alert-panel-header"><span>Recent Alerts</span><button onclick="toggleAlertPanel()"><i class="fa-solid fa-xmark"></i></button></div><div class="alert-list" id="alert-list"></div></div>
+
+        <div class="stats-row">
+            <div class="stat-card" data-color="red"><div class="stat-icon"><i class="fa-solid fa-fire"></i></div><div class="stat-info"><div class="stat-label">Critical</div><div class="stat-value" id="stat-critical">0</div></div></div>
+            <div class="stat-card" data-color="orange"><div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="stat-info"><div class="stat-label">High</div><div class="stat-value" id="stat-high">0</div></div></div>
+            <div class="stat-card" data-color="yellow"><div class="stat-icon"><i class="fa-solid fa-circle-exclamation"></i></div><div class="stat-info"><div class="stat-label">Medium</div><div class="stat-value" id="stat-medium">0</div></div></div>
+            <div class="stat-card" data-color="green"><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div><div class="stat-info"><div class="stat-label">Resolved</div><div class="stat-value" id="stat-resolved">0</div></div></div>
+            <div class="stat-card" data-color="blue"><div class="stat-icon"><i class="fa-solid fa-clock"></i></div><div class="stat-info"><div class="stat-label">Avg Response</div><div class="stat-value" id="stat-avg">--m</div></div></div>
         </div>
 
-        <!-- Stats Row -->
-        <section class="stats-row" id="stats-row">
-            <div class="stat-card" data-color="red">
-                <div class="stat-icon"><i class="fa-solid fa-fire"></i></div>
-                <div class="stat-info">
-                    <span class="stat-label">Critical</span>
-                    <span class="stat-value" id="stat-critical">0</span>
-                </div>
-            </div>
-            <div class="stat-card" data-color="orange">
-                <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div class="stat-info">
-                    <span class="stat-label">High</span>
-                    <span class="stat-value" id="stat-high">0</span>
-                </div>
-            </div>
-            <div class="stat-card" data-color="yellow">
-                <div class="stat-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
-                <div class="stat-info">
-                    <span class="stat-label">Medium</span>
-                    <span class="stat-value" id="stat-medium">0</span>
-                </div>
-            </div>
-            <div class="stat-card" data-color="green">
-                <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
-                <div class="stat-info">
-                    <span class="stat-label">Resolved</span>
-                    <span class="stat-value" id="stat-resolved">0</span>
-                </div>
-            </div>
-            <div class="stat-card" data-color="blue">
-                <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
-                <div class="stat-info">
-                    <span class="stat-label">Avg Response</span>
-                    <span class="stat-value" id="stat-avg">--m</span>
-                </div>
-            </div>
-        </section>
+        <div class="mid-row">
+            <div class="card chart-card"><div class="card-header"><span class="card-title">Incident Activity</span><div class="chart-tabs"><button class="chart-tab active" onclick="switchChart('7d',this)">7D</button><button class="chart-tab" onclick="switchChart('30d',this)">30D</button><button class="chart-tab" onclick="switchChart('all',this)">All</button></div></div><canvas id="activity-chart" height="180"></canvas></div>
+            <div class="card ai-panel"><div class="card-header"><span class="card-title"><i class="fa-solid fa-robot"></i> AI Agent Status</span><span class="agent-status-badge">Active</span></div><div class="ai-stats"><div class="ai-stat"><span class="ai-stat-val" id="ai-analyzed">0</span><span class="ai-stat-lbl">Analyzed</span></div><div class="ai-stat"><span class="ai-stat-val" id="ai-remediated">0</span><span class="ai-stat-lbl">Remediated</span></div><div class="ai-stat"><span class="ai-stat-val" id="ai-accuracy">94%</span><span class="ai-stat-lbl">Accuracy</span></div></div><div class="ai-log" id="ai-log"><div class="ai-log-entry"><span class="ai-log-time">--:--</span><span>Waiting for incidents...</span></div></div><button class="btn-primary full-width" onclick="window.location='agent.html'"><i class="fa-solid fa-robot"></i> Open AI Agent</button></div>
+        </div>
 
-        <!-- Middle Row -->
-        <section class="mid-row">
-            <div class="card chart-card">
-                <div class="card-header">
-                    <span class="card-title">Incident Activity</span>
-                    <div class="chart-tabs">
-                        <button class="chart-tab active" onclick="switchChart('7d', this)">7D</button>
-                        <button class="chart-tab" onclick="switchChart('30d', this)">30D</button>
-                        <button class="chart-tab" onclick="switchChart('all', this)">All</button>
-                    </div>
-                </div>
-                <canvas id="activity-chart" height="180"></canvas>
-            </div>
-
-            <div class="card ai-panel">
-                <div class="card-header">
-                    <span class="card-title"><i class="fa-solid fa-robot"></i> AI Agent Status</span>
-                    <span class="agent-status-badge" id="agent-badge">Active</span>
-                </div>
-                <div class="ai-stats">
-                    <div class="ai-stat">
-                        <span class="ai-stat-val" id="ai-analyzed">0</span>
-                        <span class="ai-stat-lbl">Analyzed</span>
-                    </div>
-                    <div class="ai-stat">
-                        <span class="ai-stat-val" id="ai-remediated">0</span>
-                        <span class="ai-stat-lbl">Remediated</span>
-                    </div>
-                    <div class="ai-stat">
-                        <span class="ai-stat-val" id="ai-accuracy">94%</span>
-                        <span class="ai-stat-lbl">Accuracy</span>
-                    </div>
-                </div>
-                <div class="ai-log" id="ai-log">
-                    <div class="ai-log-entry">
-                        <span class="ai-log-time">--:--</span>
-                        <span class="ai-log-msg">Waiting for incidents...</span>
-                    </div>
-                </div>
-                <button class="btn-primary full-width" onclick="window.location='agent.html'">
-                    <i class="fa-solid fa-robot"></i> Open AI Agent
-                </button>
-            </div>
-        </section>
-
-        <!-- Bottom Row -->
-        <section class="bottom-row">
-            <div class="card donut-card">
-                <div class="card-header">
-                    <span class="card-title">Severity Breakdown</span>
-                </div>
-                <canvas id="donut-chart" width="200" height="200"></canvas>
-                <div class="donut-legend" id="donut-legend"></div>
-            </div>
-
-            <div class="card incidents-card">
-                <div class="card-header">
-                    <span class="card-title">Recent Incidents</span>
-                    <div class="filter-group">
-                        <select id="severity-filter" onchange="applyFilter()">
-                            <option value="all">All Severity</option>
-                            <option value="critical">Critical</option>
-                            <option value="high">High</option>
-                            <option value="medium">Medium</option>
-                            <option value="low">Low</option>
-                        </select>
-                        <select id="status-filter" onchange="applyFilter()">
-                            <option value="all">All Status</option>
-                            <option value="open">Open</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="resolved">Resolved</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="table-wrapper">
-                    <table class="incidents-table">
-                        <thead>
-                            <tr><th>ID</th><th>Title</th><th>Severity</th><th>Status</th><th>Time</th><th>Actions</th></tr>
-                        </thead>
-                        <tbody id="incidents-tbody"></tbody>
-                    </table>
-                </div>
-                <div class="table-footer">
-                    <span id="table-count">Loading...</span>
-                    <a href="incidents.html" class="view-all-link">View All <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-            </div>
-        </section>
+        <div class="bottom-row">
+            <div class="card donut-card"><div class="card-header"><span class="card-title">Severity Breakdown</span></div><canvas id="donut-chart" width="200" height="200"></canvas><div class="donut-legend" id="donut-legend"></div></div>
+            <div class="card incidents-card"><div class="card-header"><span class="card-title">Recent Incidents</span><div class="filter-group"><select id="severity-filter" onchange="applyFilter()"><option value="all">All Severity</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select><select id="status-filter" onchange="applyFilter()"><option value="all">All Status</option><option value="open">Open</option><option value="in-progress">In Progress</option><option value="resolved">Resolved</option></select></div></div><div class="table-wrapper"><table class="incidents-table"><thead><tr><th>ID</th><th>Title</th><th>Severity</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead><tbody id="incidents-tbody"></tbody></table></div><div class="table-footer"><span id="table-count">Loading...</span><a href="incidents.html" class="view-all-link">View All <i class="fa-solid fa-arrow-right"></i></a></div></div>
+        </div>
     </main>
 
-    <!-- Modals -->
-    <div class="modal-overlay" id="create-modal" onclick="closeModalOutside(event)">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>Create New Incident</h2>
-                <button class="modal-close" onclick="closeCreateModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Incident Title *</label>
-                    <input type="text" id="inc-title" placeholder="e.g. Database connection timeout">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Severity *</label>
-                        <select id="inc-severity">
-                            <option value="critical">🔴 Critical</option>
-                            <option value="high">🟠 High</option>
-                            <option value="medium" selected>🟡 Medium</option>
-                            <option value="low">🟢 Low</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Category *</label>
-                        <select id="inc-category">
-                            <option value="infrastructure">Infrastructure</option>
-                            <option value="security">Security</option>
-                            <option value="application">Application</option>
-                            <option value="network">Network</option>
-                            <option value="database">Database</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="inc-desc" rows="3" placeholder="Describe the incident..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Assigned To</label>
-                    <input type="text" id="inc-assignee" placeholder="Engineer name or team">
-                </div>
-                <div class="form-check">
-                    <input type="checkbox" id="inc-ai-analyze" checked>
-                    <label for="inc-ai-analyze"><i class="fa-solid fa-robot"></i> Auto-analyze with AI Agent</label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-ghost" onclick="closeCreateModal()">Cancel</button>
-                <button class="btn-primary" onclick="createIncident()">
-                    <i class="fa-solid fa-plus"></i> Create Incident
-                </button>
-            </div>
-        </div>
-    </div>
+    <div class="modal-overlay" id="create-modal" onclick="closeModalOutside(event)"><div class="modal"><div class="modal-header"><h2>Create New Incident</h2><button class="modal-close" onclick="closeCreateModal()"><i class="fa-solid fa-xmark"></i></button></div><div class="modal-body"><div class="form-group"><label>Incident Title *</label><input type="text" id="inc-title" placeholder="e.g. Database connection timeout"></div><div class="form-row"><div class="form-group"><label>Severity</label><select id="inc-severity"><option value="critical">Critical</option><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div><div class="form-group"><label>Category</label><select id="inc-category"><option>Infrastructure</option><option>Security</option><option>Application</option><option>Network</option><option>Database</option></select></div></div><div class="form-group"><label>Description</label><textarea id="inc-desc" rows="3" placeholder="Describe the incident..."></textarea></div><div class="form-group"><label>Assigned To</label><input type="text" id="inc-assignee" placeholder="Engineer name"></div><div class="form-check"><input type="checkbox" id="inc-ai-analyze" checked><label><i class="fa-solid fa-robot"></i> Auto-analyze with AI Agent</label></div></div><div class="modal-footer"><button class="btn-ghost" onclick="closeCreateModal()">Cancel</button><button class="btn-primary" onclick="createIncident()">Create Incident</button></div></div></div>
 
-    <div class="modal-overlay" id="detail-modal" onclick="closeDetailOutside(event)">
-        <div class="modal modal-large">
-            <div class="modal-header">
-                <div>
-                    <h2 id="detail-title">Incident Title</h2>
-                    <span id="detail-id" style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono)"></span>
-                </div>
-                <button class="modal-close" onclick="closeDetailModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="detail-meta" id="detail-meta"></div>
-                <div class="detail-desc-box">
-                    <label>Description</label>
-                    <p id="detail-desc"></p>
-                </div>
-                <div class="ai-response-box" id="ai-response-box">
-                    <div class="ai-response-header">
-                        <i class="fa-solid fa-robot"></i> AI Agent Analysis
-                        <span class="ai-thinking" id="ai-thinking"><span></span><span></span><span></span></span>
-                    </div>
-                    <div id="ai-response-content" class="ai-response-content">Select an incident to analyze...</div>
-                </div>
-                <div class="detail-actions-row">
-                    <button class="btn-primary" onclick="analyzeWithAI()"><i class="fa-solid fa-robot"></i> Re-analyze</button>
-                    <button class="btn-success" onclick="resolveIncident()"><i class="fa-solid fa-check"></i> Mark Resolved</button>
-                    <button class="btn-danger" onclick="deleteIncident()"><i class="fa-solid fa-trash"></i> Delete</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal-overlay" id="detail-modal" onclick="closeDetailOutside(event)"><div class="modal modal-large"><div class="modal-header"><div><h2 id="detail-title">Incident Title</h2><span id="detail-id"></span></div><button class="modal-close" onclick="closeDetailModal()"><i class="fa-solid fa-xmark"></i></button></div><div class="modal-body"><div class="detail-meta" id="detail-meta"></div><div class="detail-desc-box"><label>Description</label><p id="detail-desc"></p></div><div class="ai-response-box"><div class="ai-response-header"><i class="fa-solid fa-robot"></i> AI Agent Analysis<span class="ai-thinking" id="ai-thinking"><span></span><span></span><span></span></span></div><div id="ai-response-content" class="ai-response-content">Select an incident to analyze...</div></div><div class="detail-actions-row"><button class="btn-primary" onclick="analyzeWithAI()"><i class="fa-solid fa-robot"></i> Re-analyze</button><button class="btn-success" onclick="resolveIncident()"><i class="fa-solid fa-check"></i> Mark Resolved</button><button class="btn-danger" onclick="deleteIncident()"><i class="fa-solid fa-trash"></i> Delete</button></div></div></div></div>
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- FIXED: Correct paths to JS files -->
     <script src="app.js"></script>
     <script src="dashboard.js"></script>
 </body>

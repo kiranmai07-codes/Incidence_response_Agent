@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Settings — IRA</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    /* Settings-specific extras */
+    .settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; padding: 24px; }
+    .settings-nav {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 8px; height: fit-content;
+      position: sticky; top: calc(var(--topbar-height) + 24px);
+    }
+    .settings-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-radius: var(--radius-md);
+      color: var(--text-secondary); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+    }
+    .settings-nav-item i { width: 16px; text-align: center; }
+    .settings-nav-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+    .settings-nav-item.active { color: var(--accent); background: var(--accent-glow); border-color: rgba(79,142,247,0.2); }
+    .settings-nav-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+    .settings-content { display: flex; flex-direction: column; gap: 20px; }
+    .settings-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+    }
+    .settings-card-header {
+      padding: 20px 24px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .settings-card-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .settings-card-title { font-size: 15px; font-weight: 700; }
+    .settings-card-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .settings-card-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+    .setting-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    }
+    .setting-info { flex: 1; }
+    .setting-label { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+    .setting-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .setting-divider { height: 1px; background: var(--border); }
+
+    /* Toggle switch */
+    .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; left: 3px; top: 3px;
+      width: 16px; height: 16px; background: var(--text-muted);
+      border-radius: 50%; transition: all 0.2s;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); background: white; }
+
+    /* Input field row */
+    .setting-input {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 9px 14px;
+      color: var(--text-primary); font-family: var(--font-sans); font-size: 13px;
+      outline: none; width: 260px; transition: border-color 0.2s;
+    }
+    .setting-input:focus { border-color: var(--border-focus); }
+
+    .setting-select {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 9px 14px;
+      color: var(--text-primary); font-family: var(--font-sans); font-size: 13px;
+      outline: none; width: 200px; cursor: pointer;
+    }
+
+    /* Color theme picker */
+    .color-options { display: flex; gap: 10px; flex-wrap: wrap; }
+    .color-opt {
+      width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+      border: 3px solid transparent; transition: all 0.2s;
+    }
+    .color-opt.active, .color-opt:hover { border-color: white; transform: scale(1.15); }
+
+    /* Danger zone */
+    .danger-zone { border-color: rgba(255,77,109,0.2) !important; }
+    .danger-zone .settings-card-header { border-bottom-color: rgba(255,77,109,0.15); }
+    .danger-zone .settings-card-icon { background: var(--red-bg); color: var(--red); }
+
+    /* Profile pic circle */
+    .profile-pic {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--accent-glow); border: 2px solid rgba(79,142,247,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 800; color: var(--accent);
+      position: relative; cursor: pointer; flex-shrink: 0;
+    }
+    .profile-pic-edit {
+      position: absolute; bottom: 0; right: 0;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent); color: white; font-size: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .profile-row { display: flex; align-items: center; gap: 20px; }
+    .profile-fields { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+
+    /* Status badge */
+    .status-select {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .status-opt {
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;
+      cursor: pointer; border: 1px solid var(--border); transition: all 0.2s;
+      color: var(--text-muted); background: transparent;
+    }
+    .status-opt.active { background: var(--green-bg); color: var(--green); border-color: rgba(6,214,160,0.3); }
+    .status-opt:hover { border-color: rgba(255,255,255,0.2); }
+
+    /* Save bar */
+    .save-bar {
+      position: sticky; bottom: 0; left: 0; right: 0;
+      background: rgba(10,13,20,0.95); backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border); padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      z-index: 50; margin: 0 -24px -24px; border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    }
+    .save-bar-msg { font-size: 13px; color: var(--text-muted); }
+    .save-bar-actions { display: flex; gap: 10px; }
+
+    @media (max-width: 900px) {
+      .settings-layout { grid-template-columns: 1fr; }
+      .settings-nav { position: static; display: flex; flex-wrap: wrap; gap: 4px; }
+      .setting-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .setting-input, .setting-select { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-noise"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><span class="logo-pulse"></span><i class="fa-solid fa-shield-halved"></i></div>
+    <div class="logo-text"><span class="logo-title">IRA</span><span class="logo-sub">Incident Response</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="index.html" class="nav-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+    <a href="incidents.html" class="nav-item"><i class="fa-solid fa-triangle-exclamation"></i><span>Incidents</span><span class="nav-badge" id="nav-open-count">0</span></a>
+    <a href="agent.html" class="nav-item"><i class="fa-solid fa-robot"></i><span>AI Agent</span><span class="nav-badge new">AI</span></a>
+    <a href="analytics.html" class="nav-item"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a>
+    <a href="settings.html" class="nav-item active"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+  </nav>
+  <div class="sidebar-status"><div class="status-dot active"></div><span>Agent Active</span></div>
+</aside>
+
+<main class="main-content">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+    <div class="topbar-title"><h1>Settings</h1><span class="topbar-time" id="live-time"></span></div>
+    <div class="topbar-actions">
+      <button class="btn-ghost" onclick="resetSettings()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+      <button class="btn-primary" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+    </div>
+  </header>
+
+  <div class="settings-layout">
+
+    <!-- Left Nav -->
+    <div class="settings-nav">
+      <div class="settings-nav-item active" onclick="scrollTo('profile')"><i class="fa-solid fa-user"></i> Profile</div>
+      <div class="settings-nav-item" onclick="scrollTo('notifications')"><i class="fa-solid fa-bell"></i> Notifications</div>
+      <div class="settings-nav-item" onclick="scrollTo('ai-agent')"><i class="fa-solid fa-robot"></i> AI Agent</div>
+      <div class="settings-nav-item" onclick="scrollTo('appearance')"><i class="fa-solid fa-palette"></i> Appearance</div>
+      <div class="settings-nav-item" onclick="scrollTo('integrations')"><i class="fa-solid fa-plug"></i> Integrations</div>
+      <div class="settings-nav-item" onclick="scrollTo('api')"><i class="fa-solid fa-key"></i> API Keys</div>
+      <div class="settings-nav-divider"></div>
+      <div class="settings-nav-item" onclick="scrollTo('danger')"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i> <span style="color:var(--red)">Danger Zone</span></div>
+    </div>
+
+    <!-- Right Content -->
+    <div class="settings-content">
+
+      <!-- ── PROFILE ── -->
+      <div class="settings-card" id="profile">
+        <div class="settings-card-header">
+          <div class="settings-card-icon" style="background:var(--blue-bg);color:var(--blue)"><i class="fa-solid fa-user"></i></div>
+          <div>
+            <div class="settings-card-title">Profile</div>
+            <div class="settings-card-desc">Manage your personal information and account details</div>
+          </div>
+        </div>
+        <div class="settings-card-body">
+          <div class="profile-row">
+            <div class="profile-pic" onclick="showToast('Profile picture upload coming soon','info')">
+              AK
+              <div class="profile-pic-edit"><i class="fa-solid fa-pen"></i></div>
+            </div>
+            <div class="profile-fields">
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Full Name</div>
+                </div>
+                <input type="text" class="setting-input" id="s-name" value="Aditya Kumar" placeholder="Your full name"/>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Email Address</div>
+                </div>
+                <input type="email" class="setting-input" id="s-email" value="team.ira.devnovate@gmail.com" placeholder="your@email.com"/>
+              </div>
+            </div>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Role / Title</div>
+              <div class="setting-desc">Shown on incident assignments and reports</div>
+            </div>
+            <select class="setting-select" id="s-role">
+              <option>DevOps Engineer</option>
+              <option>SRE</option>
+              <option>Platform Engineer</option>
+              <option>Security Engineer</option>
+              <option>Engineering Manager</option>
+              <option>CTO</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">On-Call Status</div>
+              <div class="setting-desc">Toggle whether you are currently on-call</div>
+            </div>
+            <div class="status-select">
+              <div class="status-opt active" onclick="setStatus(this,'active')">🟢 On-Call</div>
+              <div class="status-opt" onclick="setStatus(this,'away')">🟡 Away</div>
+              <div class="status-opt" onclick="setStatus(this,'off')">🔴 Off-Duty</div>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Phone / WhatsApp</div>
+              <div class="setting-desc">Used for SMS/call alerts on critical incidents</div>
+            </div>
+            <input type="text" class="setting-input" id="s-phone" value="+91 98765 43210" placeholder="+91 XXXXX XXXXX"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── NOTIFICATIONS ── -->
+      <div class="settings-card" id="notifications">
+        <div class="settings-card-header">
+          <div class="settings-card-icon" style="background:var(--yellow-bg);color:var(--yellow)"><i class="fa-solid fa-bell"></i></div>
+          <div>
+            <div class="settings-card-title">Notifications</div>
+            <div class="settings-card-desc">Control when and how you get alerted</div>
+          </div>
+        </div>
+        <div class="settings-card-body">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Critical Incident Alerts</div>
+              <div class="setting-desc">Immediate notification for severity: critical</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked id="n-critical"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">High Severity Alerts</div>
+              <div class="setting-desc">Notification for severity: high incidents</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked id="n-high"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Medium & Low Alerts</div>
+              <div class="setting-desc">Notification for medium and low severity incidents</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="n-low"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Email Notifications</div>
+              <div class="setting-desc">Send incident summaries to your email</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked id="n-email"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Browser Push Notifications</div>
+              <div class="setting-desc">Desktop notifications even when tab is inactive</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="n-push"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Auto-Refresh Interval</div>
+              <div class="setting-desc">How often the dashboard polls for new incidents</div>
+            </div>
+            <select class="setting-select" id="n-interval">
+              <option value="10">Every 10 seconds</option>
+              <option value="30" selected>Every 30 seconds</option>
+              <option value="60">Every 1 minute</option>
+              <option value="300">Every 5 minutes</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AI AGENT ── -->
+      <div class="settings-card" id="ai-agent">
+        <div class="settings-card-header">
+          <div class="settings-card-icon" style="background:var(--accent-glow);color:var(--accent)"><i class="fa-solid fa-robot"></i></div>
+          <div>
+            <div class="settings-card-title">AI Agent Configuration</div>
+            <div class="settings-card-desc">Configure AI behavior, model, and analysis settings</div>
+          </div>
+        </div>
+        <div class="settings-card-body">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">AI Agent Enabled</div>
+              <div class="setting-desc">Turn the AI analysis engine on or off globally</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked id="ai-enabled"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Auto-Analyze New Incidents</div>
+              <div class="setting-desc">Automatically run AI analysis when an incident is created</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked id="ai-auto"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">AI Model</div>
+              <div class="setting-desc">Select the LLM powering the agent</div>
+            </div>
+            <select class="setting-select" id="ai-model">
+              <option value="claude-sonnet">Claude Sonnet (Recommended)</option>
+              <option value="claude-haiku">Claude Haiku (Faster)</option>
+              <option value="claude-opus">Claude Opus (Most Powerful)</option>
+              <option value="mock">Mock / Offline Mode</option>
+            </select>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Analysis Depth</div>
+              <div class="setting-desc">How thorough the AI should be in its analysis</div>
+            </div>
+            <select class="setting-select" id="ai-depth">
+              <option value="quick">Quick (faster, less detail)</option>
+              <option value="standard" selected>Standard (balanced)</option>
+              <option value="deep">Deep (slower, most detail)</option>
+            </select>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Confidence Threshold</div>
+              <div class="setting-desc">Minimum AI confidence to surface recommendations</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <input type="range" id="ai-confidence" min="50" max="95" value="70" style="width:120px" oninput="document.getElementById('ai-conf-val').textContent=this.value+'%'"/>
+              <span id="ai-conf-val" style="font-family:var(--font-mono);font-size:13px;color:var(--accent);min-width:36px">70%</span>
+            </div>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Anthropic API Key</div>
+              <div class="setting-desc">Required for Claude AI integration</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <input type="password" class="setting-input" id="ai-apikey" value="sk-ant-••••••••••••••••" placeholder="sk-ant-..." style="width:200px"/>
+              <button class="btn-ghost" onclick="toggleApiKey()" style="white-space:nowrap"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── APPEARANCE ── -->
+      <div class="settings-card" id="appearance">
+        <div class="settings-card-header">
+          <div class="settings-card-icon" style="background:var(--purple-bg);color:var(--purple)"><i class="fa-solid fa-palette"></i></div>
+          <div>
+            <div class="settings-card-title">Appearance</div>
+            <div class="settings-card-desc">Customize the look and feel of IRA</div>
+          </div>
+        </div>
+        <div class="settings-card-body">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Accent Color</div>
+              <div class="setting-desc">Primary color used throughout the interface</div>
+            </div>
+            <div class="color-options">
+              <div class="color-opt active" style="background:#4f8ef7" onclick="setAccent('#4f8ef7',this)" title="Blue"></div>
+              <div class="color-opt" style="background:#06d6a0" onclick="setAccent('#06d6a0',this)" title="Green"></div>
+              <div class="color-opt" style="background:#b18aff" onclick="setAccent('#b18aff',this)" title="Purple"></div>
+              <div class="color-opt" style="background:#ff8c42" onclick="setAccent('#ff8c42',this)" title="Orange"></div>
+              <div class="color-opt" style="background:#ff4d6d" onclick="setAccent('#ff4d6d',this)" title="Red"></div>
+              <div class="color-opt" style="background:#ffd166" onclick="setAccent('#ffd166',this)" title="Yellow"></div>
+            </div>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Sidebar Compact Mode</div>
+              <div class="setting-desc">Show icons only, hide labels in sidebar</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="a-compact"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Animate Statistics</div>
+              <div class="setting-desc">Animate number counters when page loads</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked id="a-animate"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Background Grid</div>
+              <div class="setting-desc">Show the dot grid background effect</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked id="a-grid"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Items Per Page</div>
+              <div class="setting-desc">Number of incidents shown per page in the grid</div>
+            </div>
+            <select class="setting-select" id="a-perpage">
+              <option value="6">6 per page</option>
+              <option value="12" selected>12 per page</option>
+              <option value="24">24 per page</option>
+              <option value="50">50 per page</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── INTEGRATIONS ── -->
+      <div class="settings-card" id="integrations">
+        <div class="settings-card-header">
+          <div class="settings-card-icon" style="background:var(--green-bg);color:var(--green)"><i class="fa-solid fa-plug"></i></div>
+          <div>
+            <div class="settings-card-title">Integrations</div>
+            <div class="settings-card-desc">Connect IRA with your existing DevOps tools</div>
+          </div>
+        </div>
+        <div class="settings-card-body">
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label"><i class="fa-brands fa-slack" style="color:#4a154b;margin-right:6px"></i> Slack Alerts</div>
+              <div class="setting-desc">Send incident alerts to a Slack channel</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" class="setting-input" id="i-slack" placeholder="https://hooks.slack.com/..." style="width:220px"/>
+              <label class="toggle"><input type="checkbox" id="i-slack-en"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+          <div class="setting-divider"></div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label"><i class="fa-brands fa-github" style="margin-right:6px"></i> GitHub Issues</div>
+              <div class="setting-desc">Auto-create GitHub issues for new incidents</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" class="setting-input" id="i-github" placeholder="owner/repo" style="width:160px"/>
+              <label class="toggle"><input type="checkbox" id="i-github-en"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+          <div class="setting-divider"></div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label"><i class="fa-solid fa-envelope" style="color:#ea4335;margin-right:6px"></i> Email Digest</div>
+              <div class="setting-desc">Daily email summary of all incidents</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="email" class="setting-input" id="i-email" placeholder="ops-team@company.com" style="width:200px"/>
+              <label class="toggle"><input type="checkbox" checked id="i-email-en"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+          <div class="setting-divider"></div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label"><i class="fa-solid fa-webhook" style="margin-right:6px"></i> Custom Webhook</div>
+              <div class="setting-desc">POST incident data to any endpoint</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" class="setting-input" id="i-webhook" placeholder="https://your-api.com/hook" style="width:220px"/>
+              <label class="toggle"><input type="checkbox" id="i-webhook-en"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── API KEYS ── -->
+      <div class="settings-card" id="api">
+        <div class="settings-card-header">
+          <div class="settings-card-icon" style="background:var(--orange-bg);color:var(--orange)"><i class="fa-solid fa-key"></i></div>
+          <div>
+            <div class="settings-card-title">API Keys</div>
+            <div class="settings-card-desc">Manage access tokens for the IRA REST API</div>
+          </div>
+        </div>
+        <div class="settings-card-body">
+          <div style="display:flex;flex-direction:column;gap:10px" id="api-keys-list">
+            <div class="setting-row" style="background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px">
+              <div class="setting-info">
+                <div class="setting-label" style="font-family:var(--font-mono);font-size:12px">ira_prod_••••••••••••••••••••efg8</div>
+                <div class="setting-desc">Created Apr 19, 2026 · Last used: Today</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <span class="badge badge-open" style="font-size:10px">Active</span>
+                <button class="action-btn danger" onclick="showToast('API key revoked','warning')"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="setting-row" style="background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px">
+              <div class="setting-info">
+                <div class="setting-label" style="font-family:var(--font-mono);font-size:12px">ira_dev_••••••••••••••••••••xyz3</div>
+                <div class="setting-desc">Created Apr 15, 2026 · Last used: 3 days ago</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <span class="badge badge-in-progress" style="font-size:10px">Dev</span>
+                <button class="action-btn danger" onclick="showToast('API key revoked','warning')"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>
+          </div>
+          <button class="btn-ghost" onclick="generateNewKey()" style="margin-top:4px;width:fit-content">
+            <i class="fa-solid fa-plus"></i> Generate New API Key
+          </button>
+        </div>
+      </div>
+
+      <!-- ── DANGER ZONE ── -->
+      <div class="settings-card danger-zone" id="danger">
+        <div class="settings-card-header">
+          <div class="settings-card-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div>
+            <div class="settings-card-title" style="color:var(--red)">Danger Zone</div>
+            <div class="settings-card-desc">Irreversible actions — proceed with caution</div>
+          </div>
+        </div>
+        <div class="settings-card-body">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Clear All Incidents</div>
+              <div class="setting-desc">Permanently delete all incidents from local storage. Cannot be undone.</div>
+            </div>
+            <button class="btn-danger" onclick="confirmClearAll()"><i class="fa-solid fa-trash"></i> Clear All</button>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Reset to Sample Data</div>
+              <div class="setting-desc">Restore the original mock incidents for demo purposes.</div>
+            </div>
+            <button class="btn-ghost" onclick="resetSampleData()"><i class="fa-solid fa-rotate-left"></i> Reset Data</button>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Reset All Settings</div>
+              <div class="setting-desc">Restore all settings to their default values.</div>
+            </div>
+            <button class="btn-danger" onclick="resetSettings()"><i class="fa-solid fa-rotate-left"></i> Reset Settings</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /settings-content -->
+  </div><!-- /settings-layout -->
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+<script src="app.js"></script>
+<script>
+  function scrollTo(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+  }
+
+  function saveSettings() {
+    const settings = {
+      name: document.getElementById('s-name')?.value,
+      email: document.getElementById('s-email')?.value,
+      phone: document.getElementById('s-phone')?.value,
+      role: document.getElementById('s-role')?.value,
+      notifications: {
+        critical: document.getElementById('n-critical')?.checked,
+        high: document.getElementById('n-high')?.checked,
+        low: document.getElementById('n-low')?.checked,
+        email: document.getElementById('n-email')?.checked,
+        push: document.getElementById('n-push')?.checked,
+        interval: document.getElementById('n-interval')?.value,
+      },
+      ai: {
+        enabled: document.getElementById('ai-enabled')?.checked,
+        auto: document.getElementById('ai-auto')?.checked,
+        model: document.getElementById('ai-model')?.value,
+        depth: document.getElementById('ai-depth')?.value,
+      },
+      appearance: {
+        compact: document.getElementById('a-compact')?.checked,
+        animate: document.getElementById('a-animate')?.checked,
+        grid: document.getElementById('a-grid')?.checked,
+        perPage: document.getElementById('a-perpage')?.value,
+      }
+    };
+    localStorage.setItem('ira_settings', JSON.stringify(settings));
+    showToast('Settings saved successfully ✓', 'success');
+  }
+
+  function resetSettings() {
+    if (!confirm('Reset all settings to defaults?')) return;
+    localStorage.removeItem('ira_settings');
+    showToast('Settings reset to defaults', 'info');
+    setTimeout(() => location.reload(), 1000);
+  }
+
+  function setStatus(el, status) {
+    document.querySelectorAll('.status-opt').forEach(o => o.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function setAccent(color, el) {
+    document.querySelectorAll('.color-opt').forEach(o => o.classList.remove('active'));
+    el.classList.add('active');
+    document.documentElement.style.setProperty('--accent', color);
+    showToast('Accent color updated', 'success');
+  }
+
+  function toggleApiKey() {
+    const el = document.getElementById('ai-apikey');
+    if (!el) return;
+    el.type = el.type === 'password' ? 'text' : 'password';
+  }
+
+  function generateNewKey() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const key = 'ira_new_' + Array.from({length:20}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+    const list = document.getElementById('api-keys-list');
+    const div = document.createElement('div');
+    div.className = 'setting-row';
+    div.style.cssText = 'background:var(--bg-input);border:1px solid var(--green);border-radius:var(--radius-md);padding:12px 16px;animation:fade-up 0.3s ease';
+    div.innerHTML = `
+      <div class="setting-info">
+        <div class="setting-label" style="font-family:var(--font-mono);font-size:12px">${key.substring(0,32)}••••</div>
+        <div class="setting-desc" style="color:var(--green)">Just created · Copy and store securely!</div>
+      </div>
+      <span class="badge badge-resolved" style="font-size:10px">New</span>
+    `;
+    list.appendChild(div);
+    showToast('New API key generated — copy it now!', 'success', 5000);
+  }
+
+  function confirmClearAll() {
+    if (!confirm('This will permanently delete ALL incidents. Are you sure?')) return;
+    localStorage.removeItem('ira_incidents');
+    localStorage.removeItem('ira_ai_log');
+    localStorage.removeItem('ira_ai_count');
+    showToast('All incidents cleared', 'warning');
+  }
+
+  function resetSampleData() {
+    localStorage.removeItem('ira_incidents');
+    showToast('Sample data restored — refresh the dashboard', 'success');
+  }
+
+  // Load saved settings on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    const saved = JSON.parse(localStorage.getItem('ira_settings') || '{}');
+    if (saved.name) document.getElementById('s-name').value = saved.name;
+    if (saved.email) document.getElementById('s-email').value = saved.email;
+    if (saved.phone) document.getElementById('s-phone').value = saved.phone;
+  });
+</script>
+</body>
+</html>

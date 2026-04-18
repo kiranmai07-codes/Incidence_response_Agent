@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IRA — Incident Response Agent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --navy:        #0a1628;
+      --navy-mid:    #0d1f3c;
+      --navy-light:  #132444;
+      --blue-bright: #2563eb;
+      --blue-glow:   #3b82f6;
+      --blue-pale:   #60a5fa;
+      --blue-lite:   #93c5fd;
+      --white:       #ffffff;
+      --white90:     rgba(255,255,255,0.9);
+      --white60:     rgba(255,255,255,0.6);
+      --white20:     rgba(255,255,255,0.2);
+      --white08:     rgba(255,255,255,0.08);
+      --text-dark:   #0a1628;
+      --text-mid:    #1e3a5f;
+      --text-muted:  #5a7399;
+      --font:        'Syne', sans-serif;
+      --mono:        'Space Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--white); color: var(--text-dark); font-family: var(--font); overflow-x: hidden; }
+
+    /* ═══ HERO (navy) ═══ */
+    .hero-wrap { background: var(--navy); position: relative; overflow: hidden; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Animated rings */
+    .ring { position: absolute; border-radius: 50%; border: 1px solid var(--white08); pointer-events: none; animation: ring-pulse 7s ease-in-out infinite; }
+    .ring:nth-child(1) { width: 420px; height: 420px; top: -140px; right: -140px; animation-delay: 0s; }
+    .ring:nth-child(2) { width: 650px; height: 650px; top: -250px; right: -250px; animation-delay: 1.8s; }
+    .ring:nth-child(3) { width: 900px; height: 900px; top: -380px; right: -380px; animation-delay: 3.6s; }
+    .ring:nth-child(4) { width: 320px; height: 320px; bottom: 20px; left: -120px; animation-delay: 1s; }
+    .ring:nth-child(5) { width: 520px; height: 520px; bottom: -100px; left: -200px; animation-delay: 3s; }
+    @keyframes ring-pulse { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:.1;transform:scale(1.04)} }
+
+    /* Grid dots */
+    .hero-dots {
+      position: absolute; inset: 0; pointer-events: none;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px);
+      background-size: 38px 38px;
+    }
+
+    /* Particles */
+    .particle { position: absolute; border-radius: 50%; background: var(--blue-pale); pointer-events: none; animation: ptcl linear infinite; }
+    @keyframes ptcl { 0%{transform:translateY(0) translateX(0);opacity:0} 8%{opacity:1} 92%{opacity:.8} 100%{transform:translateY(-110vh) translateX(30px);opacity:0} }
+
+    /* Blue glow blob */
+    .hero-blob { position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; opacity: .18; }
+    .blob1 { width: 600px; height: 600px; background: #1d4ed8; top: -200px; left: -100px; }
+    .blob2 { width: 400px; height: 400px; background: #2563eb; bottom: -100px; right: 100px; opacity: .12; }
+
+    /* ── Navbar ── */
+    nav {
+      position: relative; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 56px; height: 70px;
+      border-bottom: 1px solid var(--white08);
+      background: rgba(10,22,40,0.6); backdrop-filter: blur(18px);
+      transition: height 0.3s, background 0.3s;
+      animation: slideDown 0.6s ease both;
+    }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-22px)} to{opacity:1;transform:translateY(0)} }
+
+    .nav-brand { display: flex; align-items: center; gap: 13px; text-decoration: none; }
+    .nav-icon {
+      width: 40px; height: 40px; border-radius: 12px; background: var(--blue-bright);
+      display: flex; align-items: center; justify-content: center; color: white; font-size: 17px;
+      box-shadow: 0 0 22px rgba(37,99,235,.55); position: relative;
+    }
+    .nav-icon::after {
+      content:''; position:absolute; inset:-4px; border-radius:16px;
+      border: 1px solid rgba(59,130,246,.45);
+      animation: spin-ring 3s linear infinite;
+    }
+    @keyframes spin-ring { to{transform:rotate(360deg)} }
+    .nav-name { font-size: 21px; font-weight: 800; color: white; letter-spacing: 2px; }
+    .nav-sub  { font-family: var(--mono); font-size: 9px; color: var(--white60); letter-spacing: 1px; }
+    .nav-links { display: flex; gap: 2px; }
+    .nl { color: var(--white60); text-decoration: none; padding: 8px 15px; border-radius: 8px; font-size: 13px; font-weight: 600; transition: all .2s; }
+    .nl:hover { color: white; background: var(--white08); }
+    .nav-btn {
+      background: var(--blue-bright); color: white; text-decoration: none;
+      padding: 10px 22px; border-radius: 10px; font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px; transition: all .25s;
+      box-shadow: 0 4px 18px rgba(37,99,235,.45);
+    }
+    .nav-btn:hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 8px 26px rgba(37,99,235,.55); }
+
+    /* ── Hero Content ── */
+    .hero-content {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 80px 24px 60px; position: relative; z-index: 1; text-align: center;
+    }
+
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--white08); border: 1px solid var(--white20);
+      border-radius: 30px; padding: 8px 22px;
+      font-family: var(--mono); font-size: 11px; color: var(--white90); letter-spacing: .5px;
+      margin-bottom: 34px; animation: fadeUp .7s ease .2s both;
+    }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 10px #4ade80; animation: blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .hero-h1 {
+      font-size: clamp(48px, 9vw, 96px); font-weight: 800; line-height: 1.0;
+      letter-spacing: -3px; animation: fadeUp .7s ease .3s both;
+    }
+    .h1-line1 { display: block; color: white; }
+    .h1-line2 {
+      display: block; color: transparent;
+      background: linear-gradient(90deg, #60a5fa, #93c5fd, #bfdbfe, #60a5fa);
+      background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
+      animation: shimmer 4s linear infinite;
+    }
+    @keyframes shimmer { to { background-position: 200% center; } }
+
+    .hero-p {
+      font-size: clamp(15px, 2vw, 19px); color: var(--white60);
+      max-width: 620px; line-height: 1.8; margin: 22px auto 44px;
+      animation: fadeUp .7s ease .4s both;
+    }
+
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; animation: fadeUp .7s ease .5s both; }
+    .btn-main {
+      background: var(--blue-bright); color: white; text-decoration: none;
+      padding: 15px 34px; border-radius: 12px; font-size: 15px; font-weight: 700;
+      display: flex; align-items: center; gap: 10px; transition: all .25s;
+      box-shadow: 0 6px 24px rgba(37,99,235,.5); border: none; cursor: pointer;
+    }
+    .btn-main:hover { background: #1d4ed8; transform: translateY(-3px); box-shadow: 0 14px 36px rgba(37,99,235,.6); }
+    .btn-ghost {
+      background: transparent; color: white; text-decoration: none;
+      padding: 15px 34px; border-radius: 12px; font-size: 15px; font-weight: 700;
+      display: flex; align-items: center; gap: 10px; transition: all .25s;
+      border: 1px solid var(--white20); cursor: pointer;
+    }
+    .btn-ghost:hover { background: var(--white08); border-color: var(--white60); }
+
+    /* Stats */
+    .hero-stats { display: flex; gap: 60px; margin-top: 72px; flex-wrap: wrap; justify-content: center; animation: fadeUp .7s ease .6s both; }
+    .stat-val { display: block; font-size: 38px; font-weight: 800; font-family: var(--mono); color: white; line-height: 1; }
+    .stat-val em { color: var(--blue-pale); font-style: normal; }
+    .stat-lbl { display: block; font-size: 12px; color: var(--white60); margin-top: 5px; letter-spacing: .5px; }
+
+    /* Scroll mouse */
+    .scroll-hint { margin-top: 60px; display: flex; flex-direction: column; align-items: center; gap: 7px; animation: fadeUp .7s ease .9s both; }
+    .mouse { width: 24px; height: 38px; border: 2px solid var(--white20); border-radius: 12px; display: flex; align-items: flex-start; justify-content: center; padding-top: 6px; }
+    .mball { width: 4px; height: 8px; background: var(--blue-pale); border-radius: 2px; animation: mscroll 1.8s ease-in-out infinite; }
+    @keyframes mscroll { 0%,100%{transform:translateY(0);opacity:1} 50%{transform:translateY(10px);opacity:.3} }
+    .scroll-txt { font-size: 10px; color: var(--white60); font-family: var(--mono); letter-spacing: 2px; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ═══ WHITE SECTION (Vision & Mission) ═══ */
+    .sec-white { background: white; padding: 110px 56px; }
+    .sec-navy  { background: var(--navy); padding: 110px 56px; }
+    .sec-light { background: #f0f6ff; padding: 110px 56px; }
+    .sec-inner { max-width: 1140px; margin: 0 auto; }
+
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--blue-bright); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px;
+    }
+    .eyebrow::before { content: '//'; opacity: .4; }
+
+    .sec-title { font-size: clamp(30px, 4vw, 48px); font-weight: 800; line-height: 1.15; margin-bottom: 16px; color: var(--text-dark); }
+    .sec-title.w { color: white; }
+    .sec-body  { font-size: 16px; color: var(--text-muted); line-height: 1.85; max-width: 580px; }
+    .sec-body.w { color: var(--white60); }
+
+    /* Divider line */
+    .div-line { height: 3px; background: linear-gradient(90deg, transparent, var(--blue-bright), transparent); }
+
+    /* VM cards */
+    .vm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 60px; }
+    .vm-card {
+      border-radius: 22px; padding: 48px 42px; position: relative; overflow: hidden;
+      transition: transform .35s ease, box-shadow .35s ease;
+    }
+    .vm-card:hover { transform: translateY(-8px); }
+    .vm-card.vis  { background: var(--navy); box-shadow: 0 8px 48px rgba(10,22,40,.15); }
+    .vm-card.mis  { background: var(--blue-bright); box-shadow: 0 8px 48px rgba(37,99,235,.3); }
+
+    .vm-deco { position: absolute; border-radius: 50%; pointer-events: none; }
+    .vis .vm-deco { width: 320px; height: 320px; background: rgba(255,255,255,.03); top:-100px; right:-100px; }
+    .mis .vm-deco { width: 320px; height: 320px; background: rgba(255,255,255,.1); bottom:-120px; left:-80px; }
+
+    .vm-ico  { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 28px; }
+    .vis .vm-ico { background: var(--white08); color: var(--blue-lite); }
+    .mis .vm-ico { background: rgba(255,255,255,.2); color: white; }
+
+    .vm-tag  { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; display: block; margin-bottom: 14px; }
+    .vis .vm-tag { color: var(--blue-pale); }
+    .mis .vm-tag { color: rgba(255,255,255,.7); }
+
+    .vm-h { font-size: 22px; font-weight: 800; line-height: 1.3; margin-bottom: 16px; color: white; }
+    .vm-p { font-size: 14px; line-height: 1.85; }
+    .vis .vm-p { color: rgba(255,255,255,.6); }
+    .mis .vm-p { color: rgba(255,255,255,.85); }
+
+    /* Features */
+    .feat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 22px; margin-top: 60px; }
+    .feat-card {
+      background: white; border: 1px solid #dbeafe; border-radius: 18px; padding: 32px 28px;
+      transition: all .3s ease; position: relative; overflow: hidden;
+    }
+    .feat-card:hover { transform: translateY(-7px); border-color: var(--blue-pale); box-shadow: 0 18px 48px rgba(37,99,235,.12); }
+    .feat-ico { width: 52px; height: 52px; border-radius: 14px; background: #eff6ff; color: var(--blue-bright); display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 20px; }
+    .feat-title { font-size: 16px; font-weight: 700; color: var(--text-dark); margin-bottom: 10px; }
+    .feat-desc  { font-size: 13px; color: var(--text-muted); line-height: 1.75; }
+
+    /* Team */
+    .team-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: center; }
+    .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .team-card {
+      background: var(--navy-light); border: 1px solid var(--white08);
+      border-radius: 20px; padding: 30px 24px;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      transition: all .35s ease;
+    }
+    .team-card:hover { transform: translateY(-7px); border-color: rgba(96,165,250,.45); box-shadow: 0 14px 40px rgba(37,99,235,.22); }
+
+    .team-av {
+      width: 72px; height: 72px; border-radius: 50%; margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 800; color: white; position: relative;
+    }
+    /* Spinning gradient ring */
+    .team-av::before {
+      content:''; position:absolute; inset:-3px; border-radius:50%;
+      padding: 2px;
+      background: conic-gradient(from 0deg, var(--blue-bright), var(--blue-lite), var(--blue-bright));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box;  
+      -webkit-mask-composite: xor;  
+      mask: linear-gradient(#fff 0 0) content-box;  
+      mask-composite: exclude;  
+      animation: rotating 3s linear infinite;  
+    }
+    @keyframes rotatering { to{transform:rotate(360deg)} }
+
+    .team-card:nth-child(1) .team-av { background: linear-gradient(135deg, #1e3a8a, #2563eb); }
+    .team-card:nth-child(2) .team-av { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+    .team-card:nth-child(3) .team-av { background: linear-gradient(135deg, #1d4ed8, #60a5fa); }
+    .team-card:nth-child(4) .team-av { background: linear-gradient(135deg, #2563eb, #93c5fd); }
+
+    .team-name { font-size: 17px; font-weight: 800; color: white; margin-bottom: 5px; }
+    .team-role { font-size: 12px; color: var(--white60); font-family: var(--mono); }
+
+    /* Hackathon badge */
+    .hack-box {
+      margin-top: 32px; background: rgba(37,99,235,.12);
+      border: 1px solid rgba(59,130,246,.3); border-radius: 16px;
+      padding: 20px 26px; display: flex; align-items: center; gap: 16px;
+    }
+    .hack-box i { font-size: 24px; color: #fbbf24; }
+    .hack-t { font-size: 15px; font-weight: 800; color: white; }
+    .hack-s { font-size: 12px; color: var(--white60); margin-top: 3px; }
+
+    /* ═══ FOOTER ═══ */
+    footer { background: var(--navy); border-top: 1px solid var(--white08); padding: 72px 56px 32px; }
+    .foot-grid {
+      max-width: 1140px; margin: 0 auto;
+      display: grid; grid-template-columns: 2.2fr 1fr 1fr 1fr;
+      gap: 56px; padding-bottom: 56px; border-bottom: 1px solid var(--white08);
+    }
+
+    .foot-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .foot-logo-ico { width: 38px; height: 38px; border-radius: 10px; background: var(--blue-bright); color: white; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .foot-logo-name { font-size: 20px; font-weight: 800; color: white; letter-spacing: 1px; }
+    .foot-tagline { font-size: 13px; color: var(--white60); line-height: 1.75; margin-bottom: 24px; }
+    .foot-contacts { display: flex; flex-direction: column; gap: 11px; }
+    .foot-c { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--white60); text-decoration: none; transition: color .2s; }
+    .foot-c:hover { color: var(--blue-lite); }
+    .foot-c i { color: var(--blue-glow); width: 14px; font-size: 13px; }
+
+    .foot-col-title { font-size: 11px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 18px; }
+    .foot-links { display: flex; flex-direction: column; gap: 10px; }
+    .foot-link { font-size: 13px; color: var(--white60); text-decoration: none; display: flex; align-items: center; gap: 7px; transition: color .2s; }
+    .foot-link:hover { color: var(--blue-lite); }
+    .foot-link i { font-size: 11px; opacity: .5; }
+
+    .foot-bottom {
+      max-width: 1140px; margin: 28px auto 0;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .foot-copy { font-size: 12px; color: rgba(255,255,255,.3); font-family: var(--mono); }
+    .foot-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { background: var(--white08); border: 1px solid var(--white08); border-radius: 6px; padding: 4px 12px; font-size: 11px; color: var(--white60); font-family: var(--mono); display: flex; align-items: center; gap: 5px; }
+    .chip.live { color: #4ade80; border-color: rgba(74,222,128,.2); background: rgba(74,222,128,.07); }
+
+    /* Scroll animations */
+    .reveal { opacity: 0; transform: translateY(34px); transition: opacity .7s ease, transform .7s ease; }
+    .reveal.left  { transform: translateX(-34px); }
+    .reveal.right { transform: translateX(34px); }
+    .reveal.in    { opacity: 1; transform: translate(0,0); }
+
+    /* Responsive */
+    @media (max-width: 1000px) {
+      nav, .sec-white, .sec-navy, .sec-light, footer { padding-left: 28px; padding-right: 28px; }
+      .vm-grid, .feat-grid, .team-wrap { grid-template-columns: 1fr; }
+      .foot-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hero-stats { gap: 30px; }
+      .team-grid { grid-template-columns: 1fr 1fr; }
+      .foot-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero-wrap">
+  <div class="hero-dots"></div>
+  <div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div>
+  <div class="hero-blob blob1"></div><div class="hero-blob blob2"></div>
+  <div id="particles"></div>
+
+  <nav id="topnav">
+    <a href="home.html" class="nav-brand">
+      <div class="nav-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="nav-name">IRA</div>
+        <div class="nav-sub">INCIDENT RESPONSE AGENT</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <!-- <a href="#sec-vm"   class="nl">Vision</a>
+      <a href="#sec-vm"   class="nl">Mission</a>
+      <a href="#sec-feat" class="nl">Features</a>
+      <a href="#sec-team" class="nl">Team</a> -->
+      <!-- <a href="home.html" class="nav-brand"> ... </a> -->
+      <a href="dashboard.html" class="nl">Dashboard</a>
+      <a href="incidents.html" class="nl">Incidents</a>
+      <a href="agent.html" class="nl">AI Agent</a>
+      <a href="analytics.html" class="nl">Analytics</a>
+    </div>
+    <!-- <a href="index.html" class="nav-btn"><i class="fa-solid fa-gauge-high"></i> Open Dashboard</a> -->
+    <a href="dashboard.html" class="nav-btn"><i class="fa-solid fa-gauge-high"></i> Open Dashboard</a>
+  </nav>
+
+  <div class="hero-content">
+    <div class="live-badge">
+      <span class="live-dot"></span>
+      DEVNOVATE HACKATHON 2026 &nbsp;·&nbsp; ENGINEERING &amp; DEVOPS TRACK
+    </div>
+
+    <h1 class="hero-h1">
+      <span class="h1-line1">Intelligent</span>
+      <span class="h1-line2">Incident Response</span>
+    </h1>
+
+    <p class="hero-p">
+      IRA is an AI-powered platform that detects, analyzes, and remediates engineering
+      incidents in real time — so your team can focus on building, not firefighting.
+    </p>
+
+    <div class="hero-actions">
+      <a href="index.html" class="btn-main"><i class="fa-solid fa-gauge-high"></i> Launch Dashboard</a>
+      <a href="#sec-vm"    class="btn-ghost"><i class="fa-solid fa-arrow-down"></i> Explore More</a>
+    </div>
+
+    <div class="hero-stats">
+      <div>
+        <span class="stat-val"><em class="ctr" data-to="94">0</em><em>%</em></span>
+        <span class="stat-lbl">AI Accuracy</span>
+      </div>
+      <div>
+        <span class="stat-val">3<em>×</em></span>
+        <span class="stat-lbl">Faster Resolution</span>
+      </div>
+      <div>
+        <span class="stat-val">24<em>/7</em></span>
+        <span class="stat-lbl">AI Monitoring</span>
+      </div>
+      <div>
+        <span class="stat-val"><em class="ctr" data-to="10">0</em><em>+</em></span>
+        <span class="stat-lbl">Incident Types</span>
+      </div>
+    </div>
+
+    <div class="scroll-hint">
+      <div class="mouse"><div class="mball"></div></div>
+      <span class="scroll-txt">SCROLL</span>
+    </div>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="div-line"></div>
+
+<!-- ═══ VISION & MISSION ═══ -->
+<section class="sec-white" id="sec-vm">
+  <div class="sec-inner">
+    <!-- <div style="text-align:center" class="reveal">
+      <span class="eyebrow">Our Purpose</span>
+      <h2 class="sec-title" style="text-align:center">Vision &amp; Mission</h2>
+      <p class="sec-body" style="margin:0 auto">What drives us and what we set out to accomplish with IRA.</p> -->
+      <div style="text-align: center; margin-top: 40px;">
+        <a href="dashboard.html" class="btn-main" style="display: inline-block;">
+            <i class="fa-solid fa-arrow-right"></i> Go to Dashboard
+        </a>
+      </div>
+    </div>
+
+    <div class="vm-grid">
+      <div class="vm-card vis reveal left">
+        <div class="vm-deco"></div>
+        <div class="vm-ico"><i class="fa-solid fa-eye"></i></div>
+        <span class="vm-tag">Our Vision</span>
+        <h3 class="vm-h">A world where incidents resolve themselves</h3>
+        <p class="vm-p">
+          We envision a future where engineering teams are never caught off-guard by production failures.
+          IRA aims to build the world's most intelligent incident response layer — one that understands
+          your infrastructure, learns from every incident, and acts before humans even notice a problem.
+          <br><br>
+          Our goal is to eliminate alert fatigue, reduce MTTR to near-zero, and let engineers
+          focus on innovation instead of firefighting.
+        </p>
+      </div>
+
+      <div class="vm-card mis reveal right">
+        <div class="vm-deco"></div>
+        <div class="vm-ico"><i class="fa-solid fa-rocket"></i></div>
+        <span class="vm-tag">Our Mission</span>
+        <h3 class="vm-h">AI-driven reliability for every engineering team</h3>
+        <p class="vm-p">
+          Our mission is to democratize enterprise-grade incident response. We combine large language
+          models with real-time observability data to automatically triage incidents, identify root causes,
+          and suggest or execute remediation steps — all within seconds.
+          <br><br>
+          We are committed to building open, explainable AI tooling that engineering teams of all sizes
+          can trust, integrate, and rely on during their most critical moments.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="div-line"></div>
+
+<!-- ═══ FEATURES ═══ -->
+<section class="sec-light" id="sec-feat">
+  <div class="sec-inner">
+    <div style="text-align:center" class="reveal">
+      <span class="eyebrow">What IRA Does</span>
+      <h2 class="sec-title" style="text-align:center">Built for the modern DevOps team</h2>
+      <p class="sec-body" style="margin:0 auto">From detection to remediation — AI at every step of your incident lifecycle.</p>
+    </div>
+
+    <div class="feat-grid">
+      <div class="feat-card reveal" style="transition-delay:.05s">
+        <div class="feat-ico"><i class="fa-solid fa-bell"></i></div>
+        <div class="feat-title">Real-Time Alerting</div>
+        <p class="feat-desc">Instant notifications for critical incidents with severity-based prioritisation and smart deduplication.</p>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.1s">
+        <div class="feat-ico"><i class="fa-solid fa-robot"></i></div>
+        <div class="feat-title">AI Agent Analysis</div>
+        <p class="feat-desc">Claude-powered AI analyzes every incident, identifies root causes, and recommends precise remediation steps.</p>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.15s">
+        <div class="feat-ico"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="feat-title">Analytics Dashboard</div>
+        <p class="feat-desc">Full visibility into incident trends, resolution times, team performance, and severity breakdowns.</p>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.2s">
+        <div class="feat-ico"><i class="fa-solid fa-wrench"></i></div>
+        <div class="feat-title">Auto Remediation</div>
+        <p class="feat-desc">Step-by-step fix playbooks generated on the fly, tailored to your infrastructure and incident category.</p>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.25s">
+        <div class="feat-ico"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="feat-title">Security Monitoring</div>
+        <p class="feat-desc">Detect threats, brute-force attacks, and anomalous patterns with automated escalation workflows.</p>
+      </div>
+      <div class="feat-card reveal" style="transition-delay:.3s">
+        <div class="feat-ico"><i class="fa-solid fa-file-lines"></i></div>
+        <div class="feat-title">Incident Reports</div>
+        <p class="feat-desc">One-click executive summaries and post-mortem reports with timeline, impact, and lessons learned.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Divider -->
+<div class="div-line"></div>
+
+<!-- ═══ TEAM ═══ -->
+<section class="sec-navy" id="sec-team">
+  <div class="sec-inner">
+    <div class="team-wrap">
+
+      <div class="reveal left">
+        <span class="eyebrow" style="color:var(--blue-pale)">The Team</span>
+        <h2 class="sec-title w" style="margin-top:8px">Built at Devnovate<br>Hackathon 2026</h2>
+        <p class="sec-body w">
+          IRA was conceived and built under the
+          <strong style="color:var(--blue-lite)">Engineering &amp; DevOps</strong> problem track
+          at Devnovate Hackathon 2026. In under 24 hours, our team built a full-stack
+          AI-powered incident response platform using Python Flask, Vanilla JS, and
+          the Anthropic Claude API.
+        </p>
+        <div class="hack-box">
+          <i class="fa-solid fa-trophy"></i>
+          <div>
+            <div class="hack-t">Devnovate Hackathon 2026</div>
+            <div class="hack-s">Engineering &amp; DevOps Track · Problem by Devnovate</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal right">
+        <div class="team-grid">
+          <div class="team-card">
+            <div class="team-av">KI</div>
+            <div class="team-name">Kiranmai</div>
+            <div class="team-role">Full Stack &amp; AI</div>
+          </div>
+          <div class="team-card">
+            <div class="team-av">MA</div>
+            <div class="team-name">Manasa</div>
+            <div class="team-role">Backend &amp; DevOps</div>
+          </div>
+          <div class="team-card">
+            <div class="team-av">SA</div>
+            <div class="team-name">Sadvila</div>
+            <div class="team-role">Frontend &amp; UI/UX</div>
+          </div>
+          <div class="team-card">
+            <div class="team-av">HA</div>
+            <div class="team-name">Harini</div>
+            <div class="team-role">AI Agent &amp; Research</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="foot-grid">
+    <div>
+      <div class="foot-logo">
+        <div class="foot-logo-ico"><i class="fa-solid fa-shield-halved"></i></div>
+        <span class="foot-logo-name">IRA</span>
+      </div>
+      <p class="foot-tagline">
+        Intelligent Incident Response Agent — AI-powered platform for real-time detection,
+        analysis, and remediation of engineering incidents. Built at Devnovate Hackathon 2026
+        by Team Kiranmai, Manasa, Sadvila &amp; Harini.
+      </p>
+      <div class="foot-contacts">
+        <a href="mailto:team.ira.devnovate@gmail.com" class="foot-c">
+          <i class="fa-solid fa-envelope"></i> team.ira.devnovate@gmail.com
+        </a>
+        <a href="tel:+919876543210" class="foot-c">
+          <i class="fa-solid fa-phone"></i> +91 98765 43210
+        </a>
+        <span class="foot-c">
+          <i class="fa-solid fa-location-dot"></i> Hyderabad, Telangana, India
+        </span>
+      </div>
+    </div>
+
+    <div>
+      <div class="foot-col-title">Project Pages</div>
+      <div class="foot-links">
+        <a href="home.html"      class="foot-link"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="index.html"     class="foot-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+        <a href="incidents.html" class="foot-link"><i class="fa-solid fa-triangle-exclamation"></i> Incidents</a>
+        <a href="agent.html"     class="foot-link"><i class="fa-solid fa-robot"></i> AI Agent</a>
+        <a href="analytics.html" class="foot-link"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+        <a href="settings.html"  class="foot-link"><i class="fa-solid fa-gear"></i> Settings</a>
+      </div>
+    </div>
+
+    <div>
+      <div class="foot-col-title">Features</div>
+      <div class="foot-links">
+        <span class="foot-link">Real-time Alerts</span>
+        <span class="foot-link">AI Root Cause Analysis</span>
+        <span class="foot-link">Auto Remediation</span>
+        <span class="foot-link">Incident Analytics</span>
+        <span class="foot-link">Security Monitoring</span>
+        <span class="foot-link">Incident Reports</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="foot-col-title">Built With</div>
+      <div class="foot-links">
+        <span class="foot-link"><i class="fa-brands fa-python"></i> Python Flask</span>
+        <span class="foot-link"><i class="fa-brands fa-js"></i> Vanilla JavaScript</span>
+        <span class="foot-link"><i class="fa-solid fa-robot"></i> Claude AI (Anthropic)</span>
+        <span class="foot-link"><i class="fa-solid fa-database"></i> SQLite</span>
+        <span class="foot-link"><i class="fa-solid fa-chart-bar"></i> Chart.js</span>
+        <span class="foot-link"><i class="fa-brands fa-html5"></i> HTML5 / CSS3</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot-bottom">
+    <span class="foot-copy">
+      © 2026 IRA — Incident Response Agent &nbsp;·&nbsp; Devnovate Hackathon
+      &nbsp;·&nbsp; Team: Kiranmai · Manasa · Sadvila · Harini
+    </span>
+    <div class="foot-chips">
+      <span class="chip live"><i class="fa-solid fa-circle"></i> API Online</span>
+      <span class="chip"><i class="fa-solid fa-code-branch"></i> v1.0.0</span>
+      <span class="chip"><i class="fa-solid fa-trophy"></i> Devnovate 2026</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ── Floating particles ── */
+(function(){
+  const host = document.getElementById('particles');
+  for(let i=0;i<20;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    const s=1.5+Math.random()*4;
+    p.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:-10px;opacity:${.15+Math.random()*.5};animation-duration:${9+Math.random()*14}s;animation-delay:${Math.random()*12}s;`;
+    host.appendChild(p);
+  }
+})();
+
+/* ── Scroll reveal ── */
+const revObs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add('in'); revObs.unobserve(e.target); }
+  });
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+
+/* ── Counter animation ── */
+function runCounter(el, target){
+  let start=null;
+  const dur=1800;
+  const step=ts=>{
+    if(!start) start=ts;
+    const p=Math.min((ts-start)/dur,1);
+    const e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(e*target);
+    if(p<1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+setTimeout(()=>{
+  document.querySelectorAll('.ctr').forEach(el=>{
+    runCounter(el, parseInt(el.dataset.to||'0'));
+  });
+},900);
+
+/* ── Navbar shrink on scroll ── */
+window.addEventListener('scroll',()=>{
+  const nav=document.getElementById('topnav');
+  if(window.scrollY>60){ nav.style.height='56px'; nav.style.background='rgba(10,22,40,.97)'; }
+  else{ nav.style.height='70px'; nav.style.background='rgba(10,22,40,.6)'; }
+},{passive:true});
+
+/* ── Smooth anchor scroll ── */
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    const t=document.querySelector(a.getAttribute('href'));
+    if(t){ e.preventDefault(); t.scrollIntoView({behavior:'smooth'}); }
+  });
+});
+</script>
+</body>
+</html>

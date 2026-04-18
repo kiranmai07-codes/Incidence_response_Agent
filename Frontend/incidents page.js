@@ -7,6 +7,12 @@ let pageStatus = 'all';
 let pageSize = 12;
 let pageCurrent = 1;
 
+fetch("http://localhost:3000/api/data")
+.then(res => res.json())
+.then(data => {
+    console.log(data.message);
+}); 
+
 function refreshPage() {
   renderIncidentsGrid();
   renderAlertPanel();

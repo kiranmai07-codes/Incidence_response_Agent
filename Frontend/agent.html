@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRA - AI Agent | Intelligent Incident Response</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        /* ============================================
+           COMPLETE CSS FOR AGENT PAGE
+           Light Theme - White & Navy Blue
+        ============================================ */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f5f7fb;
+            color: #1a2a4f;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: #1a2a4f;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            position: relative;
+        }
+
+        .logo-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
+        }
+
+        .logo-sub {
+            font-size: 10px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* Navigation */
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-item i {
+            width: 20px;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+
+        .nav-badge {
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: auto;
+        }
+
+        .nav-badge.new {
+            background: #3b82f6;
+        }
+
+        .sidebar-status {
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .status-dot.active {
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f5f7fb;
+        }
+
+        /* Topbar */
+        .topbar {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .topbar-title h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a2a4f;
+        }
+
+        .topbar-time {
+            font-size: 12px;
+            color: #64748b;
+            font-family: monospace;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .btn-ghost:hover {
+            border-color: #1a2a4f;
+            color: #1a2a4f;
+        }
+
+        /* AI Agent Layout */
+        .agent-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Incident List Sidebar */
+        .agent-sidebar-panel {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .agent-panel-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .agent-panel-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a2a4f;
+        }
+
+        .agent-panel-count {
+            background: #dbeafe;
+            color: #1a2a4f;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .agent-incident-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .agent-incident-item {
+            padding: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 6px;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .agent-incident-item:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .agent-incident-item.selected {
+            background: #dbeafe;
+            border-color: #1a2a4f;
+        }
+
+        .agent-incident-item-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #1a2a4f;
+        }
+
+        .agent-incident-item-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .badge-critical { background: #fee2e2; color: #ef4444; }
+        .badge-high { background: #ffedd5; color: #f97316; }
+        .badge-medium { background: #fef3c7; color: #eab308; }
+        .badge-low { background: #dcfce7; color: #22c55e; }
+
+        /* Quick Actions */
+        .quick-actions {
+            padding: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .quick-actions-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .quick-btn {
+            width: 100%;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #1a2a4f;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: #dbeafe;
+            border-color: #1a2a4f;
+            transform: translateX(4px);
+        }
+
+        /* Chat Panel */
+        .agent-chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-msg {
+            display: flex;
+            gap: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-msg.user {
+            flex-direction: row-reverse;
+        }
+
+        .chat-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .bot-avatar {
+            background: #dbeafe;
+            color: #1a2a4f;
+        }
+
+        .user-avatar {
+            background: #1a2a4f;
+            color: white;
+            font-weight: 700;
+        }
+
+        .chat-bubble {
+            max-width: 75%;
+        }
+
+        .chat-bubble-content {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 12px 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #1e293b;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+
+        .chat-msg.user .chat-bubble-content {
+            background: #1a2a4f;
+            color: white;
+            border-color: #1a2a4f;
+        }
+
+        .chat-msg.user .chat-bubble-content strong {
+            color: white;
+        }
+
+        .chat-bubble-content strong {
+            color: #1a2a4f;
+        }
+
+        .chat-time {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .chat-msg.user .chat-time {
+            text-align: right;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 12px;
+            padding: 0 20px 12px 20px;
+            align-items: center;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 10px 16px;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #94a3b8;
+            animation: typingBounce 1.2s ease-in-out infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%,60%,100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* Chat Input */
+        .chat-input-area {
+            padding: 16px 20px 20px;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .chat-input-box {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input-box textarea {
+            flex: 1;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #1e293b;
+            font-size: 13px;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .chat-input-box textarea:focus {
+            border-color: #1a2a4f;
+        }
+
+        .chat-input-box textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        .chat-send-btn {
+            background: #1a2a4f;
+            border: none;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .chat-send-btn:hover {
+            background: #2a3d6b;
+            transform: scale(1.05);
+        }
+
+        .chat-input-hint {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+
+        .chat-input-hint kbd {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            font-size: 10px;
+        }
+
+        /* Empty State */
+        .empty-state-small {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .agent-layout {
+                flex-direction: column;
+            }
+            .agent-sidebar-panel {
+                width: 100%;
+                max-height: 300px;
+            }
+            .chat-bubble {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+                <div class="logo-title">IRA</div>
+                <div class="logo-sub">Incident Response</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="incidents.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Incidents</span>
+                <span class="nav-badge" id="nav-open-count">3</span>
+            </a>
+            <a href="agent.html" class="nav-item active">
+                <i class="fa-solid fa-robot"></i>
+                <span>AI Agent</span>
+                <span class="nav-badge new">AI</span>
+            </a>
+            <a href="analytics.html" class="nav-item">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-status">
+            <div class="status-dot active"></div>
+            <span>Agent Active</span>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-title">
+                <h1>AI Agent Console</h1>
+                <span class="topbar-time" id="live-time"></span>
+            </div>
+            <div class="topbar-actions">
+                <button class="btn-ghost" onclick="clearChat()">
+                    <i class="fa-solid fa-trash"></i> Clear Chat
+                </button>
+            </div>
+        </header>
+
+        <div class="agent-layout">
+            <!-- Incident List Sidebar -->
+            <div class="agent-sidebar-panel">
+                <div class="agent-panel-header">
+                    <h3><i class="fa-solid fa-list"></i> Active Incidents</h3>
+                    <span class="agent-panel-count" id="open-count">6</span>
+                </div>
+                <div class="agent-incident-list" id="agent-incident-list">
+                    <div class="agent-incident-item" onclick="selectIncident('INC-001')">
+                        <div class="agent-incident-item-title">Database connection timeout</div>
+                        <div class="agent-incident-item-meta">
+                            <span class="badge badge-critical">critical</span>
+                            <span style="font-size:10px;color:#64748b">INC-001</span>
+                        </div>
+                    </div>
+                    <div class="agent-incident-item" onclick="selectIncident('INC-002')">
+                        <div class="agent-incident-item-title">API latency spike</div>
+                        <div class="agent-incident-item-meta">
+                            <span class="badge badge-high">high</span>
+                            <span style="font-size:10px;color:#64748b">INC-002</span>
+                        </div>
+                    </div>
+                    <div class="agent-incident-item" onclick="selectIncident('INC-003')">
+                        <div class="agent-incident-item-title">SSL certificate expiring</div>
+                        <div class="agent-incident-item-meta">
+                            <span class="badge badge-medium">medium</span>
+                            <span style="font-size:10px;color:#64748b">INC-003</span>
+                        </div>
+                    </div>
+                    <div class="agent-incident-item" onclick="selectIncident('INC-004')">
+                        <div class="agent-incident-item-title">Memory leak in payment service</div>
+                        <div class="agent-incident-item-meta">
+                            <span class="badge badge-high">high</span>
+                            <span style="font-size:10px;color:#64748b">INC-004</span>
+                        </div>
+                    </div>
+                    <div class="agent-incident-item" onclick="selectIncident('INC-005')">
+                        <div class="agent-incident-item-title">CDN latency in APAC</div>
+                        <div class="agent-incident-item-meta">
+                            <span class="badge badge-medium">medium</span>
+                            <span style="font-size:10px;color:#64748b">INC-005</span>
+                        </div>
+                    </div>
+                    <div class="agent-incident-item" onclick="selectIncident('INC-006')">
+                        <div class="agent-incident-item-title">Failed login attempts</div>
+                        <div class="agent-incident-item-meta">
+                            <span class="badge badge-critical">critical</span>
+                            <span style="font-size:10px;color:#64748b">INC-006</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <div class="quick-actions-title">Quick Prompts</div>
+                    <button class="quick-btn" onclick="quickAnalyze()">
+                        <i class="fa-solid fa-chart-line"></i> Analyze critical
+                    </button>
+                    <button class="quick-btn" onclick="quickRootCause()">
+                        <i class="fa-solid fa-microscope"></i> Root cause
+                    </button>
+                    <button class="quick-btn" onclick="quickRemediation()">
+                        <i class="fa-solid fa-tools"></i> Remediation plan
+                    </button>
+                    <button class="quick-btn" onclick="quickReport()">
+                        <i class="fa-solid fa-file-alt"></i> Summary report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Panel -->
+            <div class="agent-chat-panel">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="chat-msg bot">
+                        <div class="chat-avatar bot-avatar"><i class="fa-solid fa-robot"></i></div>
+                        <div class="chat-bubble">
+                            <div class="chat-bubble-content">
+                                👋 <strong>Hello! I'm the IRA AI Agent</strong> — your intelligent incident response assistant.<br><br>
+                                I can help you:<br>
+                                🔍 Analyze incidents and find root causes<br>
+                                🛠️ Suggest remediation steps<br>
+                                📊 Generate incident reports<br>
+                                ⚡ Prioritize critical issues<br><br>
+                                Select an incident from the left panel or type your question below.
+                            </div>
+                            <span class="chat-time">Now</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typing-indicator" style="display: none;">
+                    <div class="chat-avatar bot-avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="typing-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <div class="chat-input-box">
+                        <textarea id="chat-input" rows="1" placeholder="Ask about incidents, request analysis, or get remediation steps..." 
+                                  onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+                        <button class="chat-send-btn" onclick="sendChatMessage()">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="chat-input-hint">
+                        <kbd>↵ Enter</kbd> to send · <kbd>⇧ Shift</kbd>+<kbd>↵ Enter</kbd> for new line
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ============================================
+        // AGENT PAGE JAVASCRIPT
+        // ============================================
+        
+        let selectedIncident = null;
+        let isTyping = false;
+
+        const incidents = {
+            'INC-001': { id: 'INC-001', title: 'Database connection timeout', severity: 'critical', category: 'database', description: 'Production database connection pool exhausted' },
+            'INC-002': { id: 'INC-002', title: 'API latency spike', severity: 'high', category: 'application', description: 'API response times increased from 200ms to 4500ms' },
+            'INC-003': { id: 'INC-003', title: 'SSL certificate expiring', severity: 'medium', category: 'security', description: 'SSL cert expires in 3 days' },
+            'INC-004': { id: 'INC-004', title: 'Memory leak in payment service', severity: 'high', category: 'application', description: 'Memory usage growing unbounded' },
+            'INC-005': { id: 'INC-005', title: 'CDN latency in APAC', severity: 'medium', category: 'network', description: 'Users in Asia experiencing 3x latency' },
+            'INC-006': { id: 'INC-006', title: 'Failed login attempts', severity: 'critical', category: 'security', description: '150 failed login attempts from suspicious IPs' }
+        };
+
+        function updateLiveTime() {
+            const timeEl = document.getElementById('live-time');
+            if (timeEl) timeEl.textContent = new Date().toLocaleTimeString();
+        }
+        setInterval(updateLiveTime, 1000);
+        updateLiveTime();
+
+        function selectIncident(id) {
+            selectedIncident = incidents[id];
+            document.querySelectorAll('.agent-incident-item').forEach(el => el.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            
+            addBotMessage(`✅ **Selected: ${selectedIncident.id} - ${selectedIncident.title}**\n\n` +
+                `**Severity:** ${selectedIncident.severity.toUpperCase()}\n` +
+                `**Category:** ${selectedIncident.category}\n\n` +
+                `How can I help? Try asking for:\n` +
+                `• "root cause" - Why did this happen?\n` +
+                `• "remediation" - How to fix it?\n` +
+                `• "report" - Generate detailed report`);
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input?.value?.trim();
+            if (!message || isTyping) return;
+            
+            input.value = '';
+            input.style.height = 'auto';
+            
+            addUserMessage(message);
+            setTyping(true);
+            
+            await new Promise(r => setTimeout(r, 800));
+            
+            const lower = message.toLowerCase();
+            let response = "";
+            
+            if (lower.includes('root cause') && selectedIncident) {
+                response = `🔍 **Root Cause Analysis - ${selectedIncident.id}**\n\n**Likely Causes:**\n1. Connection pool exhaustion\n2. Resource saturation\n3. Recent deployment change\n\n**Confidence:** High (87%)\n\n**Next Steps:** Check logs and monitoring metrics.`;
+            } 
+            else if (lower.includes('remediation') && selectedIncident) {
+                response = `🛠️ **Remediation Plan - ${selectedIncident.id}**\n\n**Immediate Actions:**\n1. Verify impact scope\n2. Notify stakeholders\n3. Implement mitigation\n\n**Technical Steps:**\n• Check error logs\n• Restart affected services\n• Scale resources if needed\n\n⏱️ **Estimated Time:** 30-45 minutes`;
+            }
+            else if (lower.includes('report')) {
+                if (selectedIncident) {
+                    response = `📋 **Incident Report - ${selectedIncident.id}**\n\n**Title:** ${selectedIncident.title}\n**Severity:** ${selectedIncident.severity.toUpperCase()}\n**Category:** ${selectedIncident.category}\n\n**Description:**\n${selectedIncident.description}\n\n**Next Steps:** Schedule post-mortem and update documentation.`;
+                } else {
+                    response = `📊 **Overall Summary**\n\n**Total Incidents:** 6\n**Critical:** 2\n**High:** 2\n**Medium:** 2\n\nSelect an incident for detailed analysis.`;
+                }
+            }
+            else if (lower.includes('critical')) {
+                response = `🚨 **Critical Incidents**\n\n• **INC-001**: Database connection timeout\n• **INC-006**: Failed login attempts\n\n⚠️ These require immediate attention. Select one to analyze further.`;
+            }
+            else if (!selectedIncident) {
+                response = `⚠️ **No Incident Selected**\n\nPlease select an incident from the left panel first.\n\n**Try these commands:**\n• "critical" - Show critical incidents\n• "report" - Generate summary report`;
+            }
+            else {
+                response = `📋 **About ${selectedIncident.id}**\n\nWhat would you like to know? Try:\n• "root cause" - Why did this happen?\n• "remediation" - How to fix it?\n• "report" - Generate detailed report`;
+            }
+            
+            setTyping(false);
+            addBotMessage(response);
+        }
+
+        function addUserMessage(text) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'chat-msg user';
+            div.innerHTML = `
+                <div class="chat-avatar user-avatar">YOU</div>
+                <div class="chat-bubble">
+                    <div class="chat-bubble-content">${escapeHtml(text)}</div>
+                    <span class="chat-time">${new Date().toLocaleTimeString()}</span>
+                </div>
+            `;
+            container.appendChild(div);
+            scrollToBottom();
+        }
+
+        function addBotMessage(text) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'chat-msg bot';
+            div.innerHTML = `
+                <div class="chat-avatar bot-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="chat-bubble">
+                    <div class="chat-bubble-content">${formatMessage(text)}</div>
+                    <span class="chat-time">${new Date().toLocaleTimeString()}</span>
+                </div>
+            `;
+            container.appendChild(div);
+            scrollToBottom();
+        }
+
+        function formatMessage(text) {
+            let formatted = escapeHtml(text);
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            formatted = formatted.replace(/\n/g, '<br>');
+            return formatted;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function setTyping(active) {
+            isTyping = active;
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.style.display = active ? 'flex' : 'none';
+            if (active) scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chat-messages');
+            if (container) {
+                setTimeout(() => container.scrollTop = container.scrollHeight, 50);
+            }
+        }
+
+        function handleChatKey(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendChatMessage();
+            }
+        }
+
+        function autoResize(textarea) {
+            if (textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+            }
+        }
+
+        function clearChat() {
+            const container = document.getElementById('chat-messages');
+            if (container) {
+                container.innerHTML = `
+                    <div class="chat-msg bot">
+                        <div class="chat-avatar bot-avatar"><i class="fa-solid fa-robot"></i></div>
+                        <div class="chat-bubble">
+                            <div class="chat-bubble-content">
+                                👋 <strong>Hello! I'm the IRA AI Agent</strong><br><br>
+                                Select an incident from the left panel or type your question below.
+                            </div>
+                            <span class="chat-time">Now</span>
+                        </div>
+                    </div>
+                `;
+            }
+            selectedIncident = null;
+        }
+
+        function quickAnalyze() {
+            document.getElementById('chat-input').value = 'Show me critical incidents';
+            sendChatMessage();
+        }
+
+        function quickRootCause() {
+            if (selectedIncident) {
+                document.getElementById('chat-input').value = `What is the root cause of ${selectedIncident.id}?`;
+                sendChatMessage();
+            } else {
+                addBotMessage("⚠️ Please select an incident from the left panel first.");
+            }
+        }
+
+        function quickRemediation() {
+            if (selectedIncident) {
+                document.getElementById('chat-input').value = `Show me remediation steps for ${selectedIncident.id}`;
+                sendChatMessage();
+            } else {
+                addBotMessage("⚠️ Please select an incident from the left panel first.");
+            }
+        }
+
+        function quickReport() {
+            if (selectedIncident) {
+                document.getElementById('chat-input').value = `Generate report for ${selectedIncident.id}`;
+                sendChatMessage();
+            } else {
+                document.getElementById('chat-input').value = 'Generate overall incident report';
+                sendChatMessage();
+            }
+        }
+
+        // Make functions global
+        window.selectIncident = selectIncident;
+        window.sendChatMessage = sendChatMessage;
+        window.handleChatKey = handleChatKey;
+        window.autoResize = autoResize;
+        window.clearChat = clearChat;
+        window.quickAnalyze = quickAnalyze;
+        window.quickRootCause = quickRootCause;
+        window.quickRemediation = quickRemediation;
+        window.quickReport = quickReport;
+    </script>
+</body>
+</html>

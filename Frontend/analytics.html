@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analytics — IRA</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-noise"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><span class="logo-pulse"></span><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="logo-text"><span class="logo-title">IRA</span><span class="logo-sub">Incident Response</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+      <a href="incidents.html" class="nav-item"><i class="fa-solid fa-triangle-exclamation"></i><span>Incidents</span><span class="nav-badge" id="nav-open-count">0</span></a>
+      <a href="agent.html" class="nav-item"><i class="fa-solid fa-robot"></i><span>AI Agent</span><span class="nav-badge new">AI</span></a>
+      <a href="analytics.html" class="nav-item active"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a>
+      <a href="#" class="nav-item"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+    </nav>
+    <div class="sidebar-status"><div class="status-dot active"></div><span>Agent Active</span></div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <div class="topbar-title"><h1>Analytics</h1><span class="topbar-time" id="live-time"></span></div>
+      <div class="topbar-actions">
+        <button class="btn-ghost" onclick="exportReport()"><i class="fa-solid fa-file-export"></i> Export Report</button>
+        <button class="btn-primary" onclick="openCreateModal()"><i class="fa-solid fa-plus"></i> New Incident</button>
+      </div>
+    </header>
+
+    <!-- KPI Row -->
+    <section class="stats-row" id="stats-row">
+      <div class="stat-card" data-color="red">
+        <div class="stat-icon"><i class="fa-solid fa-fire"></i></div>
+        <div class="stat-info"><span class="stat-label">Total Incidents</span><span class="stat-value" id="kpi-total">0</span></div>
+      </div>
+      <div class="stat-card" data-color="green">
+        <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="stat-info"><span class="stat-label">Resolved</span><span class="stat-value" id="kpi-resolved">0</span></div>
+      </div>
+      <div class="stat-card" data-color="blue">
+        <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+        <div class="stat-info"><span class="stat-label">Avg Resolution (min)</span><span class="stat-value" id="kpi-avg">--</span></div>
+      </div>
+      <div class="stat-card" data-color="orange">
+        <div class="stat-icon"><i class="fa-solid fa-robot"></i></div>
+        <div class="stat-info"><span class="stat-label">AI Interventions</span><span class="stat-value" id="kpi-ai">0</span></div>
+      </div>
+      <div class="stat-card" data-color="yellow">
+        <div class="stat-icon"><i class="fa-solid fa-percent"></i></div>
+        <div class="stat-info"><span class="stat-label">Resolution Rate</span><span class="stat-value" id="kpi-rate">0%</span></div>
+      </div>
+    </section>
+
+    <!-- Charts Row 1 -->
+    <section class="analytics-row">
+      <div class="card chart-card-lg">
+        <div class="card-header"><span class="card-title">Incidents Over Time</span></div>
+        <canvas id="timeline-chart" height="160"></canvas>
+      </div>
+      <div class="card chart-card-sm">
+        <div class="card-header"><span class="card-title">By Category</span></div>
+        <canvas id="category-chart" height="200"></canvas>
+      </div>
+    </section>
+
+    <!-- Charts Row 2 -->
+    <section class="analytics-row">
+      <div class="card chart-card-sm">
+        <div class="card-header"><span class="card-title">Resolution Status</span></div>
+        <canvas id="status-chart" height="200"></canvas>
+      </div>
+      <div class="card chart-card-lg">
+        <div class="card-header"><span class="card-title">Severity Trends</span></div>
+        <canvas id="severity-chart" height="160"></canvas>
+      </div>
+    </section>
+
+    <!-- Top Incidents Table -->
+    <section class="card" style="margin-top:20px">
+      <div class="card-header"><span class="card-title">Top Incidents by Impact</span></div>
+      <div class="table-wrapper">
+        <table class="incidents-table">
+          <thead>
+            <tr><th>ID</th><th>Title</th><th>Severity</th><th>Category</th><th>Resolution Time</th><th>Status</th></tr>
+          </thead>
+          <tbody id="analytics-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-overlay" id="create-modal" onclick="closeModalOutside(event)">
+    <div class="modal">
+      <div class="modal-header"><h2>Create New Incident</h2><button class="modal-close" onclick="closeCreateModal()"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>Incident Title *</label><input type="text" id="inc-title" placeholder="e.g. Database connection timeout"/></div>
+        <div class="form-row">
+          <div class="form-group"><label>Severity *</label><select id="inc-severity"><option value="critical">🔴 Critical</option><option value="high">🟠 High</option><option value="medium" selected>🟡 Medium</option><option value="low">🟢 Low</option></select></div>
+          <div class="form-group"><label>Category *</label><select id="inc-category"><option value="infrastructure">Infrastructure</option><option value="security">Security</option><option value="application">Application</option><option value="network">Network</option><option value="database">Database</option></select></div>
+        </div>
+        <div class="form-group"><label>Description</label><textarea id="inc-desc" rows="3" placeholder="Describe the incident..."></textarea></div>
+        <div class="form-group"><label>Assigned To</label><input type="text" id="inc-assignee" placeholder="Engineer name or team"/></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="closeCreateModal()">Cancel</button>
+        <button class="btn-primary" onclick="createIncident()"><i class="fa-solid fa-plus"></i> Create Incident</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+  <script src="analytics-page.js"></script>
+</body>
+</html>

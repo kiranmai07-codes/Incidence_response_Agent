@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRA - Incident Response Agent</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* Additional chart sizing overrides */
+        .chart-card canvas {
+            max-height: 200px !important;
+        }
+        .donut-card canvas {
+            max-width: 160px !important;
+            max-height: 160px !important;
+        }
+        #activity-chart, #donut-chart {
+            max-height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+                <div class="logo-title">IRA</div>
+                <div class="logo-sub">Incident Response</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item active">
+                <i class="fa-solid fa-gauge-high"></i> Dashboard
+            </a>
+            <a href="incidents.html" class="nav-item">
+                <i class="fa-solid fa-triangle-exclamation"></i> Incidents
+                <span class="nav-badge" id="nav-open-count">0</span>
+            </a>
+            <a href="agent.html" class="nav-item">
+                <i class="fa-solid fa-robot"></i> AI Agent
+                <span class="nav-badge new">AI</span>
+            </a>
+            <a href="analytics.html" class="nav-item">
+                <i class="fa-solid fa-chart-line"></i> Analytics
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-gear"></i> Settings
+            </a>
+        </nav>
+        <div class="sidebar-status">
+            <div class="status-dot active"></div>
+            <span>Agent Active</span>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-title">
+                <h1>Operations Dashboard</h1>
+                <span class="topbar-time" id="live-time"></span>
+            </div>
+            <div class="topbar-actions">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search incidents..." id="global-search">
+                </div>
+                <button class="btn-alert" onclick="toggleAlertPanel()">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="bell-badge" id="bell-count">3</span>
+                </button>
+                <button class="btn-primary" onclick="openCreateModal()">
+                    <i class="fa-solid fa-plus"></i> New Incident
+                </button>
+            </div>
+        </header>
+
+        <!-- Alert Panel -->
+        <div class="alert-panel" id="alert-panel">
+            <div class="alert-panel-header">
+                <span>Recent Alerts</span>
+                <button onclick="toggleAlertPanel()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="alert-list" id="alert-list"></div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card" data-color="red">
+                <div class="stat-icon"><i class="fa-solid fa-fire"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">Critical</div>
+                    <div class="stat-value" id="stat-critical">0</div>
+                </div>
+            </div>
+            <div class="stat-card" data-color="orange">
+                <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">High</div>
+                    <div class="stat-value" id="stat-high">0</div>
+                </div>
+            </div>
+            <div class="stat-card" data-color="yellow">
+                <div class="stat-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">Medium</div>
+                    <div class="stat-value" id="stat-medium">0</div>
+                </div>
+            </div>
+            <div class="stat-card" data-color="green">
+                <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">Resolved</div>
+                    <div class="stat-value" id="stat-resolved">0</div>
+                </div>
+            </div>
+            <div class="stat-card" data-color="blue">
+                <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+                <div class="stat-info">
+                    <div class="stat-label">Avg Response</div>
+                    <div class="stat-value" id="stat-avg">--m</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="mid-row">
+            <!-- Activity Chart -->
+            <div class="card chart-card">
+                <div class="card-header">
+                    <span class="card-title">Incident Activity</span>
+                    <div class="chart-tabs">
+                        <button class="chart-tab active" onclick="switchChart('7d', this)">7D</button>
+                        <button class="chart-tab" onclick="switchChart('30d', this)">30D</button>
+                        <button class="chart-tab" onclick="switchChart('all', this)">All</button>
+                    </div>
+                </div>
+                <canvas id="activity-chart" height="200"></canvas>
+            </div>
+
+            <!-- AI Panel -->
+            <div class="card ai-panel">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-robot"></i> AI Agent Status</span>
+                    <span class="agent-status-badge">Active</span>
+                </div>
+                <div class="ai-stats">
+                    <div class="ai-stat">
+                        <div class="ai-stat-val" id="ai-analyzed">0</div>
+                        <div class="ai-stat-lbl">Analyzed</div>
+                    </div>
+                    <div class="ai-stat">
+                        <div class="ai-stat-val" id="ai-remediated">0</div>
+                        <div class="ai-stat-lbl">Remediated</div>
+                    </div>
+                    <div class="ai-stat">
+                        <div class="ai-stat-val" id="ai-accuracy">94%</div>
+                        <div class="ai-stat-lbl">Accuracy</div>
+                    </div>
+                </div>
+                <div class="ai-log" id="ai-log">
+                    <div class="ai-log-entry">
+                        <span class="ai-log-time">--:--</span>
+                        <span>Waiting for incidents...</span>
+                    </div>
+                </div>
+                <button class="btn-primary full-width" onclick="window.location='agent.html'">
+                    <i class="fa-solid fa-robot"></i> Open AI Agent
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="bottom-row">
+            <!-- Donut Chart -->
+            <div class="card donut-card">
+                <div class="card-header">
+                    <span class="card-title">Severity Breakdown</span>
+                </div>
+                <canvas id="donut-chart" width="160" height="160"></canvas>
+                <div class="donut-legend" id="donut-legend"></div>
+            </div>
+
+            <!-- Recent Incidents Table -->
+            <div class="card incidents-card">
+                <div class="card-header">
+                    <span class="card-title">Recent Incidents</span>
+                    <div class="filter-group">
+                        <select id="severity-filter" onchange="applyFilter()">
+                            <option value="all">All Severity</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                        <select id="status-filter" onchange="applyFilter()">
+                            <option value="all">All Status</option>
+                            <option value="open">Open</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="incidents-table">
+                        <thead>
+                            <tr><th>ID</th><th>Title</th><th>Severity</th><th>Status</th><th>Time</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="incidents-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <span id="table-count">Loading...</span>
+                    <a href="incidents.html" class="view-all-link">View All <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Incident Modal -->
+    <div class="modal-overlay" id="create-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Create New Incident</h2>
+                <button class="modal-close" onclick="closeCreateModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Incident Title *</label>
+                    <input type="text" id="inc-title" placeholder="e.g., Database connection timeout">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Severity</label>
+                        <select id="inc-severity">
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="inc-category">
+                            <option>Infrastructure</option>
+                            <option>Security</option>
+                            <option>Application</option>
+                            <option>Network</option>
+                            <option>Database</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="inc-desc" rows="3" placeholder="Describe the incident..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Assigned To</label>
+                    <input type="text" id="inc-assignee" placeholder="Engineer name">
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" id="inc-ai-analyze" checked>
+                    <label><i class="fa-solid fa-robot"></i> Auto-analyze with AI Agent</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-ghost" onclick="closeCreateModal()">Cancel</button>
+                <button class="btn-primary" onclick="createIncident()">Create Incident</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="dashboard.js"></script>
+    <script>
+        // Sample data for charts
+        const incidents = [
+            { id: 'INC-001', title: 'Database timeout', severity: 'critical', status: 'open', time: new Date() },
+            { id: 'INC-002', title: 'API latency', severity: 'high', status: 'in-progress', time: new Date() },
+            { id: 'INC-003', title: 'SSL expiring', severity: 'medium', status: 'open', time: new Date() },
+            { id: 'INC-004', title: 'Memory leak', severity: 'high', status: 'resolved', time: new Date() }
+        ];
+
+        // Initialize activity chart
+        const ctx = document.getElementById('activity-chart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Incidents',
+                    data: [4, 7, 3, 8, 5, 2, 3],
+                    borderColor: '#1a2a4f',
+                    backgroundColor: 'rgba(26,42,79,0.05)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#1a2a4f',
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { size: 11 } } }
+                }
+            }
+        });
+
+        // Initialize donut chart
+        const donutCtx = document.getElementById('donut-chart').getContext('2d');
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical', 'High', 'Medium', 'Low'],
+                datasets: [{
+                    data: [2, 3, 4, 1],
+                    backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                cutout: '65%'
+            }
+        });
+
+        // Update stats
+        document.getElementById('stat-critical').textContent = '2';
+        document.getElementById('stat-high').textContent = '3';
+        document.getElementById('stat-medium').textContent = '4';
+        document.getElementById('stat-resolved').textContent = '5';
+        document.getElementById('stat-avg').textContent = '32m';
+        document.getElementById('ai-analyzed').textContent = '12';
+        document.getElementById('ai-remediated').textContent = '9';
+
+        function switchChart(range, btn) {
+            document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function applyFilter() {}
+        function openCreateModal() { document.getElementById('create-modal').classList.add('open'); }
+        function closeCreateModal() { document.getElementById('create-modal').classList.remove('open'); }
+        function createIncident() { closeCreateModal(); }
+        function toggleAlertPanel() { document.getElementById('alert-panel').classList.toggle('open'); }
+
+        function updateLiveTime() {
+            const timeEl = document.getElementById('live-time');
+            if (timeEl) timeEl.textContent = new Date().toLocaleTimeString();
+        }
+        setInterval(updateLiveTime, 1000);
+        updateLiveTime();
+    </script>
+</body>
+</html>

@@ -10,29 +10,37 @@ CORS(app)
 
 # ─── Serve Frontend ───────────────────────────────────────────
 @app.route('/')
-def serve_index():
+def serve_home():
+    return send_from_directory(app.static_folder, 'home.html')  # HOME PAGE is first
+ 
+@app.route('/dashboard')
+def serve_dashboard():
     return send_from_directory(app.static_folder, 'index.html')
-
+ 
 @app.route('/incidents')
 def serve_incidents():
     return send_from_directory(app.static_folder, 'incidents.html')
-
+ 
 @app.route('/agent')
 def serve_agent():
     return send_from_directory(app.static_folder, 'agent.html')
-
+ 
 @app.route('/analytics')
 def serve_analytics():
     return send_from_directory(app.static_folder, 'analytics.html')
-
+ 
+@app.route('/settings')
+def serve_settings():
+    return send_from_directory(app.static_folder, 'settings.html')
+ 
 # Serve any static file (css, js, images)
 @app.route('/<path:path>')
 def serve_static(path):
     full_path = os.path.join(app.static_folder, path)
     if os.path.exists(full_path):
         return send_from_directory(app.static_folder, path)
-    # fallback to index
-    return send_from_directory(app.static_folder, 'index.html')
+    # fallback to home
+    return send_from_directory(app.static_folder, 'home.html')
 
 # ─── Sample Data ──────────────────────────────────────────────
 incidents = [
